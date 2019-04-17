@@ -34,7 +34,7 @@ namespace DynamicData.SignalR
 
         //private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
         private readonly SemaphoreLocker _slocker = new SemaphoreLocker();
-        private readonly object _locker = new object();
+        //private readonly object _locker = new object();
 
         public SignalRReaderWriter(HubConnection connection, Expression<Func<TObject, TKey>> keySelectorExpression = null)
         {
@@ -133,7 +133,8 @@ namespace DynamicData.SignalR
 
         private ChangeSet<TObject, TKey> DoUpdate(Action<SignalRRemoteUpdater<TObject, TKey>> updateAction, Action<ChangeSet<TObject, TKey>> previewHandler, bool collectChanges)
         {
-            lock (_locker)
+            //lock (_locker)
+            return _slocker.Lock(() =>
             {
                 if (previewHandler != null)
                 {
@@ -142,7 +143,7 @@ namespace DynamicData.SignalR
 
                     _remoteUpdater = new SignalRRemoteUpdater<TObject, TKey>(_connection, changeAwareCache, _keySelectorExpression);
                     updateAction(_remoteUpdater);
-                    
+
                     _remoteUpdater = null;
 
                     var changes = changeAwareCache.CaptureChanges();
@@ -161,6 +162,7 @@ namespace DynamicData.SignalR
 
                         _remoteUpdater = new SignalRRemoteUpdater<TObject, TKey>(_connection, changeAwareCache, _keySelectorExpression);
                         updateAction(_remoteUpdater);
+                        Debug.Assert(_data.Count > 0);
                         _remoteUpdater = null;
 
                         return changeAwareCache.CaptureChanges();
@@ -174,12 +176,13 @@ namespace DynamicData.SignalR
                         return ChangeSet<TObject, TKey>.Empty;
                     }
                 }
-            }
+            });
         }
 
         internal void WriteNested(Action<ISourceUpdater<TObject, TKey>> updateAction)
         {
-            lock (_locker)
+            //lock (_locker)
+            _slocker.Lock(() =>
             {
                 if (_remoteUpdater == null)
                 {
@@ -187,7 +190,7 @@ namespace DynamicData.SignalR
                 }
                 updateAction(_remoteUpdater);
                 //return connection.SendAsync("DoUpdate", updateAction, null, true);
-            }
+            });
         }
 
         #endregion
@@ -231,6 +234,7 @@ namespace DynamicData.SignalR
                 return changes;
 
             });
+            _onChanges.OnNext(result);
             return result;
         }
 
@@ -238,12 +242,13 @@ namespace DynamicData.SignalR
         {
             get
             {
-                lock (_locker)
+                //lock (_locker)
+                return _slocker.Lock(() =>
                 {
                     TKey[] result = new TKey[_data.Count];
                     _data.Keys.CopyTo(result, 0);
                     return result;
-                }
+                });
             }
         }
 
@@ -251,7 +256,8 @@ namespace DynamicData.SignalR
         {
             get
             {
-                lock (_locker)
+                //lock (_locker)
+                return _slocker.Lock(() =>
                 {
                     KeyValuePair<TKey, TObject>[] result = new KeyValuePair<TKey, TObject>[_data.Count];
                     int i = 0;
@@ -262,7 +268,7 @@ namespace DynamicData.SignalR
                     }
 
                     return result;
-                }
+                });
             }
         }
 
@@ -270,27 +276,34 @@ namespace DynamicData.SignalR
         {
             get
             {
-                lock (_locker)
+                //lock (_locker)
+                return _slocker.Lock(() =>
                 {
                     TObject[] result = new TObject[_data.Count];
                     _data.Values.CopyTo(result, 0);
                     return result;
-                }
+                });
             }
         }
 
         public Optional<TObject> Lookup(TKey key)
         {
-            lock (_locker)
+            //lock (_locker)
+            return _slocker.Lock(() =>
+            {
                 return _data.Lookup(key);
+            });
         }
 
         public int Count
         {
             get
             {
-                lock (_locker)
+                return _slocker.Lock<int>(() =>
+                {
+                    //(_locker)
                     return _data.Count;
+                });
             }
         }
 

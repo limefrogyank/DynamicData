@@ -10,7 +10,7 @@ using System.Text;
 
 namespace DynamicData.SignalR
 {
-    public class CustomContractResolver<TObject,TKey> : DefaultContractResolver
+    public class CustomContractResolver : DefaultContractResolver
     {
         public override JsonContract ResolveContract(Type type)
         {
@@ -21,14 +21,26 @@ namespace DynamicData.SignalR
         {
             JsonContract contract = base.CreateContract(objectType);
 
-            if (objectType == typeof(Change<TObject,TKey>))
+
+            if (objectType.IsGenericType )
             {
-                contract.Converter = new ChangeConverter<TObject,TKey>();
+                if (objectType.GetGenericTypeDefinition() == typeof(Change<>))
+                {
+                    var types = objectType.GetGenericArguments();
+                    var changeConverterType = typeof(ChangeConverter<,>).MakeGenericType(types);
+                    var changeConverter = Activator.CreateInstance(changeConverterType);
+                    contract.Converter = (JsonConverter)changeConverter;
+                }
+                else if (objectType.GetGenericTypeDefinition() == typeof(ChangeSet<>))
+                {
+                    var types = objectType.GetGenericArguments();
+                    var changeSetConverterType = typeof(ChangeSetConverter<,>).MakeGenericType(types);
+                    var changeSetConverter = Activator.CreateInstance(changeSetConverterType);
+                    contract.Converter = (JsonConverter)changeSetConverter;
+                }
             }
-            else if (objectType == typeof(ChangeSet<TObject, TKey>))
-            {
-                contract.Converter = new ChangeSetConverter<TObject, TKey>();
-            }
+
+       
             return contract;
         }
     }

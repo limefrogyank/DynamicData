@@ -18,14 +18,14 @@ using Serialize.Linq.Serializers;
 
 namespace DynamicData.SignalR
 {
-    internal sealed class ApiObservableCache<TObject, TKey> : IObservableCache<TObject, TKey>
+    internal sealed class SignalRObservableCache<TObject, TKey> : IObservableCache<TObject, TKey>
     {
         private readonly Subject<ChangeSet<TObject, TKey>> _changes = new Subject<ChangeSet<TObject, TKey>>();
         private readonly Subject<ChangeSet<TObject, TKey>> _changesPreview = new Subject<ChangeSet<TObject, TKey>>();
         private readonly Lazy<ISubject<int>> _countChanged = new Lazy<ISubject<int>>(() => new Subject<int>());
         private readonly SignalRReaderWriter<TObject, TKey> _readerWriter;
         private readonly IDisposable _cleanUp;
-        private readonly object _locker = new object();
+        //private readonly object _locker = new object();
         private readonly object _writeLock = new object();
 
         private HubConnection _connection;        
@@ -35,9 +35,10 @@ namespace DynamicData.SignalR
         private int _editLevel; // The level of recursion in editing.
 
         private string _baseUrl;
+        private Task initializationTask;
         private readonly Expression<Func<TObject, TKey>> _keySelectorExpression;
 
-        public ApiObservableCache(string baseUrl, Expression<Func<TObject, TKey>> keySelectorExpression)
+        public SignalRObservableCache(string baseUrl, Expression<Func<TObject, TKey>> keySelectorExpression)
         {
             _baseUrl = baseUrl;
             _keySelectorExpression = keySelectorExpression;
@@ -85,12 +86,12 @@ namespace DynamicData.SignalR
             };
             
 
-            InitializeSignalR();
+            initializationTask = InitializeSignalR();
         }
 
-        internal async void InitializeSignalR()
+        internal Task InitializeSignalR()
         {
-            await _slocker.LockAsync(async () =>
+            var task = _slocker.LockAsync(async () =>
             {
                 await _connection.StartAsync();
 
@@ -101,6 +102,7 @@ namespace DynamicData.SignalR
 
                 Debug.WriteLine("Connection initialized");
             });
+            return task;
         }
 
         private bool ValidateCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
@@ -111,8 +113,40 @@ namespace DynamicData.SignalR
         }
 
 
-        internal void UpdateFromSource(Action<ISourceUpdater<TObject, TKey>> updateAction)
+        internal async void UpdateFromSource(Action<ISourceUpdater<TObject, TKey>> updateAction)
         {
+            if (initializationTask!= null)
+                await initializationTask;
+            if (updateAction == null) throw new ArgumentNullException(nameof(updateAction));
+            lock (_writeLock)
+            {
+                ChangeSet<TObject, TKey> changes = null;
+
+                _editLevel++;
+                if (_editLevel == 1)
+                {
+                    var previewHandler = _changesPreview.HasObservers ? (Action<ChangeSet<TObject, TKey>>)InvokePreview : null;
+                    changes = _readerWriter.Write(updateAction, previewHandler, _changes.HasObservers);
+                }
+                else
+                {
+                    //var task = _readerWriter.Write(updateAction, null, _changes.HasObservers);
+                    _readerWriter.WriteNested(updateAction);
+                }
+                _editLevel--;
+
+                if (_editLevel == 0)
+                {
+                    InvokeNext(changes);
+                }
+            }
+        }
+
+        internal async Task UpdateFromSourceAsync(Action<ISourceUpdater<TObject, TKey>> updateAction)
+        {
+            if (initializationTask != null)
+                await initializationTask;
+
             if (updateAction == null) throw new ArgumentNullException(nameof(updateAction));
             lock (_writeLock)
             {
@@ -140,27 +174,36 @@ namespace DynamicData.SignalR
 
         private void InvokePreview(ChangeSet<TObject, TKey> changes)
         {
-            lock (_locker)
+            _slocker.Lock(() =>
             {
+
+                //lock (_locker)
+                //{
                 if (changes.Count != 0)
                     _changesPreview.OnNext(changes);
-            }
+                
+                //}
+            });
         }
 
         private void InvokeNext(ChangeSet<TObject, TKey> changes)
         {
-            lock (_locker)
+            //lock (_locker)
+            _slocker.Lock(() =>
             {
                 if (changes.Count != 0)
                     _changes.OnNext(changes);
 
                 if (_countChanged.IsValueCreated)
                     _countChanged.Value.OnNext(_readerWriter.Count);
-            }
+            });
         }
 
-        internal Task<ChangeSet<TObject,TKey>> GetInitialUpdatesAsync(Expression<Func<TObject, bool>> filterExpression = null) => _readerWriter.GetInitialUpdates(filterExpression);
-
+        internal async Task<ChangeSet<TObject, TKey>> GetInitialUpdatesAsync(Expression<Func<TObject, bool>> filterExpression = null)
+        {
+            await initializationTask;
+            return await _readerWriter.GetInitialUpdates(filterExpression);
+        }
 
         public IEnumerable<TKey> Keys => _readerWriter.Keys;
 
@@ -176,17 +219,27 @@ namespace DynamicData.SignalR
         {
             if (predicate != null) throw new Exception("For ApiSourceCache, you can't have predicates in the connect method.  Use Expression<Func<TObject,bool>> overload instead.");
 
-            return Observable.Defer(async () =>
+            return Observable.Defer<IChangeSet<TObject,TKey>>(async () =>
             {
                 //lock (_locker)
-                var result = await _slocker.LockAsync(async () =>
-               {
-                   var initial = await GetInitialUpdatesAsync(null);
-                   var changes = Observable.Return(initial).Concat(_changes);
+               // var firstConnect = await _slocker.LockAsync(async () =>
+               //{
+               //    //var initial = await GetInitialUpdatesAsync(null);
+               //    var changes = _changes;
 
-                   return changes.NotEmpty();
-               });
-                return result;
+               //    return changes.NotEmpty();
+               //});
+
+                //_slocker.Lock(() =>
+                //{
+                    var task = GetInitialUpdatesAsync(null);
+                //var changes = Observable.Return(initial).Concat(_changes);
+                //return changes.NotEmpty();
+                //});
+
+                //await _slocker.LockAsync(() => { return null; });
+
+                return _changes;
             });
         }
 
@@ -225,7 +278,8 @@ namespace DynamicData.SignalR
             (
                 observer =>
                 {
-                    lock (_locker)
+                    //lock (_locker)
+                    var result = _slocker.Lock(() =>
                     {
                         var initial = _readerWriter.Lookup(key);
                         if (initial.HasValue)
@@ -240,7 +294,8 @@ namespace DynamicData.SignalR
                                     observer.OnNext(change);
                             }
                         });
-                    }
+                    });
+                    return result;
                 });
         }
     }

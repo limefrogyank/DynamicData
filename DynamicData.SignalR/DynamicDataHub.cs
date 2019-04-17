@@ -74,7 +74,7 @@ namespace DynamicData.SignalR
                 if (found != null)
                 {
                     existing.Add(key, found);
-                    _dbContext.Update(item);
+                    _dbContext.Entry(found).CurrentValues.SetValues(item);
                 }
                 else
                     _dbContext.Add(item);
@@ -101,7 +101,7 @@ namespace DynamicData.SignalR
             if (found != null)
             {
                 existing.Add(key, found);
-                _dbContext.Entry(item).CurrentValues.SetValues(item);
+                _dbContext.Entry(found).CurrentValues.SetValues(item);
             }
             else
                 _dbContext.Add(item);
@@ -109,7 +109,7 @@ namespace DynamicData.SignalR
             var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);            
             changeAwareCache.AddOrUpdate(item, key);
             
-            _dbContext.SaveChanges();
+            var num = _dbContext.SaveChanges();
 
             await SendChangesToOthersAsync(changeAwareCache);
             //var changes = changeAwareCache.CaptureChanges();

@@ -11,6 +11,35 @@ namespace DynamicData.SignalR
     {
         private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
+        public void Lock(Action action)
+        {
+            _semaphore.Wait();
+            try
+            {
+                action();
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+               
+
+        public T Lock<T>(Func<T> worker)
+        {
+            T result = default(T);
+            _semaphore.Wait();
+            try
+            {
+                result = worker();
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+            return result;
+        }
+
         public async Task LockAsync(Func<Task> worker)
         {
             await _semaphore.WaitAsync();

@@ -48,7 +48,7 @@ namespace DynamicData.SignalR
 
         public int Count => _cache.Count;
 
-        public async void AddOrUpdate(IEnumerable<TObject> items)
+        public void AddOrUpdate(IEnumerable<TObject> items)
         {
             
             if (items == null) throw new ArgumentNullException(nameof(items));
@@ -68,10 +68,10 @@ namespace DynamicData.SignalR
                     _cache.AddOrUpdate(item, _keySelector(item));
             }
 
-            await _connection.InvokeAsync("AddOrUpdateObjects", items);
+            _connection.InvokeAsync("AddOrUpdateObjects", items);
         }
 
-        public async void AddOrUpdate(TObject item)
+        public void AddOrUpdate(TObject item)
         {
             if (_keySelector == null)
                 throw new KeySelectorException("A key selector must be specified");
@@ -79,7 +79,7 @@ namespace DynamicData.SignalR
             var key = _keySelector(item);
             _cache.AddOrUpdate(item, key);
 
-            await _connection.InvokeAsync("AddOrUpdateObject", item);
+            _connection.InvokeAsync("AddOrUpdateObject", item);
         }
 
         public void AddOrUpdate(TObject item, IEqualityComparer<TObject> comparer)
@@ -87,7 +87,7 @@ namespace DynamicData.SignalR
             throw new NotImplementedException();
         }
 
-        public async void AddOrUpdate(IEnumerable<KeyValuePair<TKey, TObject>> keyValuePairs)
+        public void AddOrUpdate(IEnumerable<KeyValuePair<TKey, TObject>> keyValuePairs)
         {
             if (keyValuePairs is IList<KeyValuePair<TKey, TObject>> list)
             {
@@ -101,35 +101,35 @@ namespace DynamicData.SignalR
                 foreach (var item in keyValuePairs)
                     _cache.AddOrUpdate(item.Value, item.Key);
             }
-            await _connection.InvokeAsync("AddOrUpdateKeyValuePairs", keyValuePairs);
+            _connection.InvokeAsync("AddOrUpdateKeyValuePairs", keyValuePairs);
         }
 
-        public async void AddOrUpdate(KeyValuePair<TKey, TObject> item)
+        public void AddOrUpdate(KeyValuePair<TKey, TObject> item)
         {
             _cache.AddOrUpdate(item.Value, item.Key);
-            await _connection.InvokeAsync("AddOrUpdateKeyValuePair", item);
+            _connection.InvokeAsync("AddOrUpdateKeyValuePair", item);
         }
 
-        public async void AddOrUpdate(TObject item, TKey key)
+        public  void AddOrUpdate(TObject item, TKey key)
         {
             _cache.AddOrUpdate(item, key);
-            await _connection.InvokeAsync("AddOrUpdateValueWithKey", item, key);
+            _connection.InvokeAsync("AddOrUpdateValueWithKey", item, key);
         }
 
-        public async void Clear()
+        public void Clear()
         {
             var items = _cache.Items.ToList();
             _cache.Clear();
-            await _connection.InvokeAsync("RemoveItems", items);
+            _connection.InvokeAsync("RemoveItems", items);
         }
 
-        public async void Clone(IChangeSet<TObject, TKey> changes)
+        public void Clone(IChangeSet<TObject, TKey> changes)
         {
             _cache.Clone(changes);
 
             var changesString = Newtonsoft.Json.JsonConvert.SerializeObject(changes, new ChangeSetConverter<TObject, TKey>());
 
-            await _connection.InvokeAsync("Clone", changesString);
+            _connection.InvokeAsync("Clone", changesString);
         }
 
         public void Evaluate(IEnumerable<TObject> items)
@@ -190,7 +190,7 @@ namespace DynamicData.SignalR
 
 
 
-        public async void Refresh(IEnumerable<TObject> items)
+        public void Refresh(IEnumerable<TObject> items)
         {
             if (_keySelector == null)
                 throw new KeySelectorException("A key selector must be specified");
@@ -212,10 +212,10 @@ namespace DynamicData.SignalR
                     Refresh(item);
             }
 
-            await _connection.InvokeAsync("RefreshKeys", items.Select(x=>_keySelector.Invoke(x)).ToList());
+            _connection.InvokeAsync("RefreshKeys", items.Select(x=>_keySelector.Invoke(x)).ToList());
         }
 
-        public async void Refresh(TObject item)
+        public void Refresh(TObject item)
         {
             if (_keySelector == null)
                 throw new KeySelectorException("A key selector must be specified");
@@ -223,17 +223,17 @@ namespace DynamicData.SignalR
             var key = _keySelector(item);
             _cache.Refresh(key);
 
-            await _connection.InvokeAsync("RefreshKeys", new List<TKey>() { key });
+            _connection.InvokeAsync("RefreshKeys", new List<TKey>() { key });
         }
 
-        public async void Refresh()
+        public void Refresh()
         {
             _cache.Refresh();
 
-            await _connection.InvokeAsync("RefreshKeys", _cache.Keys.ToList());
+            _connection.InvokeAsync("RefreshKeys", _cache.Keys.ToList());
         }
 
-        public async void Refresh(IEnumerable<TKey> keys)
+        public void Refresh(IEnumerable<TKey> keys)
         {
             if (keys == null) throw new ArgumentNullException(nameof(keys));
             if (keys is IList<TKey> list)
@@ -249,18 +249,18 @@ namespace DynamicData.SignalR
                     Refresh(key);
             }
 
-            await _connection.InvokeAsync("RefreshKeys", keys);
+            _connection.InvokeAsync("RefreshKeys", keys);
         }
 
-        public async void Refresh(TKey key)
+        public void Refresh(TKey key)
         {
             _cache.Refresh(key);
-            await _connection.InvokeAsync("RefreshKeys", new List<TKey>() { key });
+            _connection.InvokeAsync("RefreshKeys", new List<TKey>() { key });
         }
 
 
 
-        public async void Remove(IEnumerable<TObject> items)
+        public void Remove(IEnumerable<TObject> items)
         {
             if (items == null) throw new ArgumentNullException(nameof(items));
 
@@ -276,21 +276,21 @@ namespace DynamicData.SignalR
                 foreach (var item in items)
                     Remove(item);
             }
-            await _connection.InvokeAsync("RemoveItems", items);
+            _connection.InvokeAsync("RemoveItems", items);
 
         }
 
-        public async void Remove(TObject item)
+        public void Remove(TObject item)
         {
             if (_keySelector == null)
                 throw new KeySelectorException("A key selector must be specified");
 
             var key = _keySelector(item);
             _cache.Remove(key);
-            await _connection.InvokeAsync("RemoveItem", item);
+            _connection.InvokeAsync("RemoveItem", item);
         }
 
-        public async void Remove(IEnumerable<TKey> keys)
+        public void Remove(IEnumerable<TKey> keys)
         {
             if (keys == null) throw new ArgumentNullException(nameof(keys));
             if (keys is IList<TKey> list)
@@ -305,16 +305,16 @@ namespace DynamicData.SignalR
                 foreach (var key in keys)
                     Remove(key);
             }
-            await _connection.InvokeAsync("RemoveKeys", keys);
+            _connection.InvokeAsync("RemoveKeys", keys);
         }
 
-        public async void Remove(TKey key)
+        public void Remove(TKey key)
         {
             _cache.Remove(key);
-            await _connection.InvokeAsync("RemoveKey", key);
+            _connection.InvokeAsync("RemoveKey", key);
         }
 
-        public async void Remove(IEnumerable<KeyValuePair<TKey, TObject>> items)
+        public void Remove(IEnumerable<KeyValuePair<TKey, TObject>> items)
         {
             if (items == null) throw new ArgumentNullException(nameof(items));
 
@@ -330,13 +330,13 @@ namespace DynamicData.SignalR
                 foreach (var key in items)
                     Remove(key);
             }
-            await _connection.InvokeAsync("RemoveKeyValuePairs", items);
+            _connection.InvokeAsync("RemoveKeyValuePairs", items);
         }
 
-        public async void Remove(KeyValuePair<TKey, TObject> item)
+        public void Remove(KeyValuePair<TKey, TObject> item)
         {
             Remove(item.Key);
-            await _connection.InvokeAsync("RemoveKeyValuePair", item);
+            _connection.InvokeAsync("RemoveKeyValuePair", item);
         }
 
         public void RemoveKey(TKey key)
@@ -350,13 +350,13 @@ namespace DynamicData.SignalR
             Remove(keys);
         }
 
-        public async void Update(IChangeSet<TObject, TKey> changes)
+        public void Update(IChangeSet<TObject, TKey> changes)
         {
             _cache.Clone(changes);
 
             var changesString = Newtonsoft.Json.JsonConvert.SerializeObject(changes, new ChangeSetConverter<TObject, TKey>());
 
-            await _connection.InvokeAsync("Clone", changesString);
+            _connection.InvokeAsync("Clone", changesString);
         }
     }
 }
