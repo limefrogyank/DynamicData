@@ -15,6 +15,11 @@ See the sample aspnetcore app for an example of how to setup SignalR and use the
 7.  Primary Keys must be created by the client.  When you add an object to the `SignalRSourceCache`, it is always going to assume a Primary Key is already there.  You can't have EntityFrameworkCore create it for you and return it. 
 8.  I am not at all sure how to allow the readonly `IObservableCache` (from .AsObservableCache) to get a `Connect` overload that allows `Expression` predicates (without major changes to DynamicData).   For now, I'm just going to have to work with exposed `SignalRSourceCache`s everywhere.  (They are still `ISourceCache` but can easily be casted back to the original class.)
 
+## Create a SignalR Hub two ways
+
+### DynamicDataHub<TObject,TKey,TContext> 
+
+
 ## Additional dependencies ##
 In addition to the expected AspNetCore stuff, there is a dependency on a library called `Serialize.Linq`.   This is the library that serializes the `Expression`.  
 
