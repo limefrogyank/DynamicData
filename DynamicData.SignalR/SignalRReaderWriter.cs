@@ -17,34 +17,18 @@ using System.Threading.Tasks;
 
 namespace DynamicData.SignalR
 {
-    internal sealed class SignalRReaderWriter<TObject, TKey>
+    internal sealed class SignalRReaderWriter<TObject, TKey> : SignalRReaderWriterBase<TObject,TKey>
     {
-        private readonly Expression<Func<TObject, TKey>> _keySelectorExpression;
-        Func<TObject, TKey> _keySelector;
-        private Dictionary<TKey, TObject> _data = new Dictionary<TKey, TObject>(); //could do with priming this on first time load
-        private SignalRRemoteUpdater<TObject, TKey> _remoteUpdater;
-
-
-        private Subject<ChangeSet<TObject, TKey>> _onChanges;
-        public IObservable<ChangeSet<TObject, TKey>> Changes => _onChanges.AsObservable();
-
-        string baseUrl;
-        private HubConnection _connection;
-        private string _selectorString;
 
         //private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+        private HubConnection _connection;
         private readonly SemaphoreLocker _slocker = new SemaphoreLocker();
         //private readonly object _locker = new object();
 
         public SignalRReaderWriter(HubConnection connection, Expression<Func<TObject, TKey>> keySelectorExpression = null)
+            : base(keySelectorExpression)
         {
-            _keySelectorExpression = keySelectorExpression;
-            _onChanges = new Subject<ChangeSet<TObject, TKey>>();
-
             _connection = connection;
-
-            _keySelector = _keySelectorExpression.Compile();
-
 
             //setting contract resolver on ConnectionBuilder is throwing an exception... solve it later, just deserialize manually
             _connection.On("Changes", (string changeSetJson) =>
@@ -77,61 +61,10 @@ namespace DynamicData.SignalR
 
         }
 
-        private ChangeSet<TObject,TKey> ReplaceInstancesWithCachedInstances(ChangeSet<TObject,TKey> deserializedChanges)
-        {
-            var localChangeSet = new ChangeSet<TObject,TKey>();
-            foreach (var change in deserializedChanges)
-            {
-                switch (change.Reason)
-                {
-                    case ChangeReason.Add:
-                        //this should be updated by key, so no need to get the original instance
-                        localChangeSet.Add(change);
-                        break;
-                    case ChangeReason.Update:
-                        //need to get original old item
-                        var originalInstance = _data[_keySelector.Invoke(change.Previous.Value)];
-                        var localChange = new Change<TObject, TKey>(change.Reason, change.Key, change.Current, Optional.Some(originalInstance));
-                        localChangeSet.Add(localChange);
-                        break;
-                    case ChangeReason.Remove:
-                    case ChangeReason.Refresh:
-                        originalInstance = _data[change.Key];
-                        localChange = new Change<TObject, TKey>(change.Reason, change.Key, originalInstance);
-                        localChangeSet.Add(localChange);
-                        break;
-                    case ChangeReason.Moved:
-                        // not used in ObservableCache
-                        break;
-                }
-            }
-            return localChangeSet;
-        }
+        
 
-        #region Writers
-
-        public ChangeSet<TObject, TKey> Write(IChangeSet<TObject, TKey> changes, Action<ChangeSet<TObject, TKey>> previewHandler, bool collectChanges)
-        {
-            if (changes == null) throw new ArgumentNullException(nameof(changes));
-
-            return DoUpdate(updater => updater.Clone(changes), previewHandler, collectChanges);
-        }
-
-        public ChangeSet<TObject, TKey> Write(Action<ICacheUpdater<TObject, TKey>> updateAction, Action<ChangeSet<TObject, TKey>> previewHandler, bool collectChanges)
-        {
-            if (updateAction == null) throw new ArgumentNullException(nameof(updateAction));
-
-            return DoUpdate(updateAction, previewHandler, collectChanges);
-        }
-
-        public ChangeSet<TObject, TKey> Write(Action<ISourceUpdater<TObject, TKey>> updateAction, Action<ChangeSet<TObject, TKey>> previewHandler, bool collectChanges)
-        {
-            if (updateAction == null) throw new ArgumentNullException(nameof(updateAction));
-
-            return DoUpdate(updateAction, previewHandler, collectChanges);
-        }
-
-        private ChangeSet<TObject, TKey> DoUpdate(Action<SignalRRemoteUpdater<TObject, TKey>> updateAction, Action<ChangeSet<TObject, TKey>> previewHandler, bool collectChanges)
+       
+        protected override  ChangeSet<TObject, TKey> DoUpdate(Action<SignalRRemoteUpdaterBase<TObject, TKey>> updateAction, Action<ChangeSet<TObject, TKey>> previewHandler, bool collectChanges)
         {
             //lock (_locker)
             return _slocker.Lock(() =>
@@ -179,25 +112,10 @@ namespace DynamicData.SignalR
             });
         }
 
-        internal void WriteNested(Action<ISourceUpdater<TObject, TKey>> updateAction)
-        {
-            //lock (_locker)
-            _slocker.Lock(() =>
-            {
-                if (_remoteUpdater == null)
-                {
-                    throw new InvalidOperationException("WriteNested can only be used if another write is already in progress.");
-                }
-                updateAction(_remoteUpdater);
-                //return connection.SendAsync("DoUpdate", updateAction, null, true);
-            });
-        }
-
-        #endregion
-
+        
         #region Accessors
 
-        public async Task<ChangeSet<TObject, TKey>> GetInitialUpdates(Expression<Func<TObject, bool>> filterExpression = null)
+        public override async Task<ChangeSet<TObject, TKey>> GetInitialUpdates(Expression<Func<TObject, bool>> filterExpression = null)
         {
             //lock (_locker)
             var result = await _slocker.LockAsync(async () =>

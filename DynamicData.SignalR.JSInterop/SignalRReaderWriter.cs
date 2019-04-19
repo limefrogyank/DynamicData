@@ -1,6 +1,5 @@
 ﻿using DynamicData.Cache.Internal;
 using DynamicData.Kernel;
-using DynamicData.SignalR.JSInterop;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.JSInterop;
 using Serialize.Linq.Serializers;
@@ -17,43 +16,40 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DynamicData.SignalR
+namespace DynamicData.SignalR.JSInterop
 {
-    internal sealed class SignalRReaderWriter<TObject, TKey>
+    internal sealed class SignalRReaderWriter<TObject, TKey> : SignalRReaderWriterBase<TObject,TKey>
     {
-        private readonly Expression<Func<TObject, TKey>> _keySelectorExpression;
-        Func<TObject, TKey> _keySelector;
-        private Dictionary<TKey, TObject> _data = new Dictionary<TKey, TObject>(); //could do with priming this on first time load
-        private SignalRRemoteUpdater<TObject, TKey> _remoteUpdater;
+        //private readonly Expression<Func<TObject, TKey>> _keySelectorExpression;
+        //Func<TObject, TKey> _keySelector;
+        //private Dictionary<TKey, TObject> _data = new Dictionary<TKey, TObject>(); //could do with priming this on first time load
+        //private SignalRRemoteUpdater<TObject, TKey> _remoteUpdater;
 
 
-        private Subject<ChangeSet<TObject, TKey>> _onChanges;
+        //private Subject<ChangeSet<TObject, TKey>> _onChanges;
         private readonly IJSRuntime _jsRuntime;
 
-        public IObservable<ChangeSet<TObject, TKey>> Changes => _onChanges.AsObservable();
+        //public IObservable<ChangeSet<TObject, TKey>> Changes => _onChanges.AsObservable();
 
-        string baseUrl;
-        private string _selectorString;
+        //string baseUrl;
+        //private string _selectorString;
 
-        //private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
-        private readonly SemaphoreLocker _slocker = new SemaphoreLocker();
-        //private readonly object _locker = new object();
+        ////private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+        //private readonly SemaphoreLocker _slocker = new SemaphoreLocker();
+        ////private readonly object _locker = new object();
 
         public SignalRReaderWriter(IJSRuntime jsRuntime, Expression<Func<TObject, TKey>> keySelectorExpression = null)
+            : base(keySelectorExpression)
         {
-            _keySelectorExpression = keySelectorExpression;
-            _onChanges = new Subject<ChangeSet<TObject, TKey>>();
+            //_keySelectorExpression = keySelectorExpression;
+            //_onChanges = new Subject<ChangeSet<TObject, TKey>>();
 
             _jsRuntime = jsRuntime;
 
-            _keySelector = _keySelectorExpression.Compile();
-
-
-
-
-
+            //_keySelector = _keySelectorExpression.Compile();
         }
 
+        //this is the method that javascript SignalR calls on change received
         public void OnChanges(string changeSetJson)
         {
             var changeSet = Newtonsoft.Json.JsonConvert.DeserializeObject<ChangeSet<TObject, TKey>>(changeSetJson, new ChangeSetConverter<TObject, TKey>());
@@ -80,63 +76,60 @@ namespace DynamicData.SignalR
             _onChanges.OnNext(localChangeSet);
         }
 
-        private ChangeSet<TObject, TKey> ReplaceInstancesWithCachedInstances(ChangeSet<TObject, TKey> deserializedChanges)
+        //private ChangeSet<TObject, TKey> ReplaceInstancesWithCachedInstances(ChangeSet<TObject, TKey> deserializedChanges)
+        //{
+        //    var localChangeSet = new ChangeSet<TObject, TKey>();
+        //    foreach (var change in deserializedChanges)
+        //    {
+        //        switch (change.Reason)
+        //        {
+        //            case ChangeReason.Add:
+        //                //this should be updated by key, so no need to get the original instance
+        //                localChangeSet.Add(change);
+        //                break;
+        //            case ChangeReason.Update:
+        //                //need to get original old item
+        //                var originalInstance = _data[_keySelector.Invoke(change.Previous.Value)];
+        //                var localChange = new Change<TObject, TKey>(change.Reason, change.Key, change.Current, Optional.Some(originalInstance));
+        //                localChangeSet.Add(localChange);
+        //                break;
+        //            case ChangeReason.Remove:
+        //            case ChangeReason.Refresh:
+        //                originalInstance = _data[change.Key];
+        //                localChange = new Change<TObject, TKey>(change.Reason, change.Key, originalInstance);
+        //                localChangeSet.Add(localChange);
+        //                break;
+        //            case ChangeReason.Moved:
+        //                // not used in ObservableCache
+        //                break;
+        //        }
+        //    }
+        //    return localChangeSet;
+        //}
+
+        //public ChangeSet<TObject, TKey> Write(IChangeSet<TObject, TKey> changes, Action<ChangeSet<TObject, TKey>> previewHandler, bool collectChanges)
+        //{
+        //    if (changes == null) throw new ArgumentNullException(nameof(changes));
+
+        //    return DoUpdate(updater => updater.Clone(changes), previewHandler, collectChanges);
+        //}
+
+        //public ChangeSet<TObject, TKey> Write(Action<ICacheUpdater<TObject, TKey>> updateAction, Action<ChangeSet<TObject, TKey>> previewHandler, bool collectChanges)
+        //{
+        //    if (updateAction == null) throw new ArgumentNullException(nameof(updateAction));
+
+        //    return DoUpdate(updateAction, previewHandler, collectChanges);
+        //}
+
+        //public ChangeSet<TObject, TKey> Write(Action<ISourceUpdater<TObject, TKey>> updateAction, Action<ChangeSet<TObject, TKey>> previewHandler, bool collectChanges)
+        //{
+        //    if (updateAction == null) throw new ArgumentNullException(nameof(updateAction));
+
+        //    return DoUpdate(updateAction, previewHandler, collectChanges);
+        //}
+
+        protected override ChangeSet<TObject, TKey> DoUpdate(Action<SignalRRemoteUpdaterBase<TObject, TKey>> updateAction, Action<ChangeSet<TObject, TKey>> previewHandler, bool collectChanges)
         {
-            var localChangeSet = new ChangeSet<TObject, TKey>();
-            foreach (var change in deserializedChanges)
-            {
-                switch (change.Reason)
-                {
-                    case ChangeReason.Add:
-                        //this should be updated by key, so no need to get the original instance
-                        localChangeSet.Add(change);
-                        break;
-                    case ChangeReason.Update:
-                        //need to get original old item
-                        var originalInstance = _data[_keySelector.Invoke(change.Previous.Value)];
-                        var localChange = new Change<TObject, TKey>(change.Reason, change.Key, change.Current, Optional.Some(originalInstance));
-                        localChangeSet.Add(localChange);
-                        break;
-                    case ChangeReason.Remove:
-                    case ChangeReason.Refresh:
-                        originalInstance = _data[change.Key];
-                        localChange = new Change<TObject, TKey>(change.Reason, change.Key, originalInstance);
-                        localChangeSet.Add(localChange);
-                        break;
-                    case ChangeReason.Moved:
-                        // not used in ObservableCache
-                        break;
-                }
-            }
-            return localChangeSet;
-        }
-
-        #region Writers
-
-        public ChangeSet<TObject, TKey> Write(IChangeSet<TObject, TKey> changes, Action<ChangeSet<TObject, TKey>> previewHandler, bool collectChanges)
-        {
-            if (changes == null) throw new ArgumentNullException(nameof(changes));
-
-            return DoUpdate(updater => updater.Clone(changes), previewHandler, collectChanges);
-        }
-
-        public ChangeSet<TObject, TKey> Write(Action<ICacheUpdater<TObject, TKey>> updateAction, Action<ChangeSet<TObject, TKey>> previewHandler, bool collectChanges)
-        {
-            if (updateAction == null) throw new ArgumentNullException(nameof(updateAction));
-
-            return DoUpdate(updateAction, previewHandler, collectChanges);
-        }
-
-        public ChangeSet<TObject, TKey> Write(Action<ISourceUpdater<TObject, TKey>> updateAction, Action<ChangeSet<TObject, TKey>> previewHandler, bool collectChanges)
-        {
-            if (updateAction == null) throw new ArgumentNullException(nameof(updateAction));
-
-            return DoUpdate(updateAction, previewHandler, collectChanges);
-        }
-
-        private ChangeSet<TObject, TKey> DoUpdate(Action<SignalRRemoteUpdater<TObject, TKey>> updateAction, Action<ChangeSet<TObject, TKey>> previewHandler, bool collectChanges)
-        {
-            //lock (_locker)
             return _slocker.Lock(() =>
             {
                 if (previewHandler != null)
@@ -182,25 +175,22 @@ namespace DynamicData.SignalR
             });
         }
 
-        internal void WriteNested(Action<ISourceUpdater<TObject, TKey>> updateAction)
-        {
-            //lock (_locker)
-            _slocker.Lock(() =>
-            {
-                if (_remoteUpdater == null)
-                {
-                    throw new InvalidOperationException("WriteNested can only be used if another write is already in progress.");
-                }
-                updateAction(_remoteUpdater);
-                //return connection.SendAsync("DoUpdate", updateAction, null, true);
-            });
-        }
+        //internal void WriteNested(Action<ISourceUpdater<TObject, TKey>> updateAction)
+        //{
+        //    //lock (_locker)
+        //    _slocker.Lock(() =>
+        //    {
+        //        if (_remoteUpdater == null)
+        //        {
+        //            throw new InvalidOperationException("WriteNested can only be used if another write is already in progress.");
+        //        }
+        //        updateAction(_remoteUpdater);
+        //        //return connection.SendAsync("DoUpdate", updateAction, null, true);
+        //    });
+        //}
 
-        #endregion
 
-        #region Accessors
-
-        public async Task<ChangeSet<TObject, TKey>> GetInitialUpdates(Expression<Func<TObject, bool>> filterExpression = null)
+        public override async Task<ChangeSet<TObject, TKey>> GetInitialUpdates(Expression<Func<TObject, bool>> filterExpression = null)
         {
             //lock (_locker)
             var result = await _slocker.LockAsync(async () =>
@@ -209,7 +199,7 @@ namespace DynamicData.SignalR
 
                 if (filterExpression == null)
                     _data = await _jsRuntime.InvokeAsync<Dictionary<TKey, TObject>>("dynamicDataSignalR.invoke", "GetKeyValuePairs");
-                    //_data = await _connection.InvokeAsync<Dictionary<TKey, TObject>>("GetKeyValuePairs");
+                //_data = await _connection.InvokeAsync<Dictionary<TKey, TObject>>("GetKeyValuePairs");
                 else
                 {
                     filter = filterExpression.Compile();
@@ -234,7 +224,7 @@ namespace DynamicData.SignalR
                         changes.Add(new Change<TObject, TKey>(ChangeReason.Add, kvp.Key, kvp.Value));
                 }
                 var converter = new ChangeSetConverter<TObject, TKey>();
-               
+
                 return changes;
 
             });
@@ -242,75 +232,73 @@ namespace DynamicData.SignalR
             return result;
         }
 
-        public TKey[] Keys
-        {
-            get
-            {
-                //lock (_locker)
-                return _slocker.Lock(() =>
-                {
-                    TKey[] result = new TKey[_data.Count];
-                    _data.Keys.CopyTo(result, 0);
-                    return result;
-                });
-            }
-        }
+        //public TKey[] Keys
+        //{
+        //    get
+        //    {
+        //        //lock (_locker)
+        //        return _slocker.Lock(() =>
+        //        {
+        //            TKey[] result = new TKey[_data.Count];
+        //            _data.Keys.CopyTo(result, 0);
+        //            return result;
+        //        });
+        //    }
+        //}
 
-        public KeyValuePair<TKey, TObject>[] KeyValues
-        {
-            get
-            {
-                //lock (_locker)
-                return _slocker.Lock(() =>
-                {
-                    KeyValuePair<TKey, TObject>[] result = new KeyValuePair<TKey, TObject>[_data.Count];
-                    int i = 0;
-                    foreach (var kvp in _data)
-                    {
-                        result[i] = kvp;
-                        i++;
-                    }
+        //public KeyValuePair<TKey, TObject>[] KeyValues
+        //{
+        //    get
+        //    {
+        //        //lock (_locker)
+        //        return _slocker.Lock(() =>
+        //        {
+        //            KeyValuePair<TKey, TObject>[] result = new KeyValuePair<TKey, TObject>[_data.Count];
+        //            int i = 0;
+        //            foreach (var kvp in _data)
+        //            {
+        //                result[i] = kvp;
+        //                i++;
+        //            }
 
-                    return result;
-                });
-            }
-        }
+        //            return result;
+        //        });
+        //    }
+        //}
 
-        public TObject[] Items
-        {
-            get
-            {
-                //lock (_locker)
-                return _slocker.Lock(() =>
-                {
-                    TObject[] result = new TObject[_data.Count];
-                    _data.Values.CopyTo(result, 0);
-                    return result;
-                });
-            }
-        }
+        //public TObject[] Items
+        //{
+        //    get
+        //    {
+        //        //lock (_locker)
+        //        return _slocker.Lock(() =>
+        //        {
+        //            TObject[] result = new TObject[_data.Count];
+        //            _data.Values.CopyTo(result, 0);
+        //            return result;
+        //        });
+        //    }
+        //}
 
-        public Optional<TObject> Lookup(TKey key)
-        {
-            //lock (_locker)
-            return _slocker.Lock(() =>
-            {
-                return _data.Lookup(key);
-            });
-        }
+        //public Optional<TObject> Lookup(TKey key)
+        //{
+        //    //lock (_locker)
+        //    return _slocker.Lock(() =>
+        //    {
+        //        return _data.Lookup(key);
+        //    });
+        //}
 
-        public int Count
-        {
-            get
-            {
-                return _slocker.Lock(() =>
-                {
-                    //(_locker)
-                    return _data.Count;
-                });
-            }
-        }
-
-        #endregion
+        //public int Count
+        //{
+        //    get
+        //    {
+        //        return _slocker.Lock(() =>
+        //        {
+        //            //(_locker)
+        //            return _data.Count;
+        //        });
+        //    }
+        //}
     }
 }

@@ -9,9 +9,9 @@ using Microsoft.JSInterop;
 namespace DynamicData.SignalR.JSInterop
 {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-    public class SignalRSourceCache<TObject, TKey> : DynamicData.SignalR.SignalRSourceCache<TObject,TKey>, ISourceCache<TObject, TKey>
+    public class SignalRSourceCache<TObject, TKey> : ISourceCache<TObject, TKey>
     {
-        private readonly SignalRObservableCache<TObject, TKey> _innerCache;
+        private readonly SignalRObservableCacheBase<TObject, TKey> _innerCache;
         private readonly IJSRuntime _jsRuntime;
         private readonly string _baseUrl;
 

@@ -10,7 +10,7 @@ namespace DynamicData.SignalR
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     public class SignalRSourceCache<TObject, TKey> : ISourceCache<TObject, TKey>
     {
-        private readonly SignalRObservableCache<TObject, TKey> _innerCache;
+        private readonly SignalRObservableCacheBase<TObject, TKey> _innerCache;
         private string _baseUrl;
 
         public SignalRSourceCache(string baseUrl, Expression<Func<TObject, TKey>> keySelectorExpression)
@@ -18,7 +18,7 @@ namespace DynamicData.SignalR
             _baseUrl = baseUrl;
             if (keySelectorExpression == null) throw new ArgumentNullException(nameof(keySelectorExpression));
             _innerCache = new SignalRObservableCache<TObject, TKey>(baseUrl, keySelectorExpression);
-            _innerCache.InitializeSignalR();
+            //_innerCache.InitializeSignalR();
 
             
         }
