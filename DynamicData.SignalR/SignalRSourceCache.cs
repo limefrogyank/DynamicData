@@ -8,7 +8,7 @@ using DynamicData.Kernel;
 namespace DynamicData.SignalR
 {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-    public class SignalRSourceCache<TObject, TKey> : ISourceCache<TObject, TKey>
+    public class SignalRSourceCache<TObject, TKey> : ISourceCache<TObject, TKey>, ISourceCacheAsync<TObject, TKey>
     {
         private readonly SignalRObservableCacheBase<TObject, TKey> _innerCache;
         private string _baseUrl;
