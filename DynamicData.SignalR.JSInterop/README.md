@@ -4,7 +4,7 @@ Quirks unique to this package:
 1.  The Blazor library is imported into your Blazor app properly yet.  In particular, the javascript file is not imported properly.  Even the awesome https://github.com/SQL-MisterMagoo/BlazorEmbedLibrary doesn't quite work in this case.  The javascript file doesn't load quickly enough.  You have to manually copy the embedded JS files into your Blazor app and statically link them in your Index.cshtml page.
 
 
-#Copied from `DynamicData.SignalR`#
+# Copied from `DynamicData.SignalR` #
 You must use netcore v3 (preview) for this to work!
 
 See the sample aspnetcore app for an example of how to setup SignalR and use the generic hub, `DynamicDataHub<TObject,TKey,TContext>`.  You must be using EntityFrameworkCore and some kind of database (any will do).  The sample uses Sqlite for convenience.
