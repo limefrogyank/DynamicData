@@ -1,11 +1,12 @@
-You must use netcore v3 (preview) for this to work!
+## You must use netcore v3 (preview) for this to work! ##
 
 See the sample aspnetcore app for an example of how to setup SignalR and use the generic hub, `DynamicDataHub<TObject,TKey,TContext>`.  You must be using EntityFrameworkCore and some kind of database (any will do).  The sample uses Sqlite for convenience.
 
 Authentication/Authorization is not implemented yet, but it will be.  It might be a little tricky.
 
-(I'm open to suggestions about this next part)
-The way SignalR works with DynamicData:
+
+## The way SignalR works with DynamicData: ##
+(I'm open to suggestions about all of this)
 
 1.  DynamicData will cache the data that already exists on the server.  You can use a predicate to limit what is initially pulled down.
 2.  Once your cache is established, any filters you apply will work on your cached data.
@@ -16,4 +17,7 @@ The way SignalR works with DynamicData:
 7.  Primary Keys must be created by the client.  When you add an object to the `SignalRSourceCache`, it is always going to assume a Primary Key is already there.  You can't have EntityFrameworkCore create it for you and return it. 
 8.  I am not at all sure how to allow the readonly `IObservableCache` (from .AsObservableCache) to get a `Connect` overload that allows `Expression` predicates (without major changes to DynamicData).   For now, I'm just going to have to work with exposed `SignalRSourceCache`s everywhere.  (They are still `ISourceCache` but can easily be casted back to the original class.)
 
+## Additional dependencies ##
 In addition to the expected AspNetCore stuff, there is a dependency on a library called `Serialize.Linq`.   This is the library that serializes the `Expression`.  
+
+I just discovered `System.Linq.Dynamic.Core` uses string based predicates... maybe that is a better way to go...? 
