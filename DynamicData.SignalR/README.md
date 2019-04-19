@@ -71,7 +71,20 @@ public class CourseHub : DynamicData.SignalR.DynamicDataPredicateHub<Course, str
         }
     }
 ```
+## Using the `SignalRSourceCache<TObject,TKey>`
 
+For the most part, this is used very similarly to the standard `SourceCache<TObject,TKey>`.  
+```
+var param = Expression.Parameter(typeof(Course), "course");
+var body = Expression.PropertyOrField(param, "Id");
+var lambda = Expression.Lambda<Func<Course, string>>(body, param);
+courseCache = new DynamicData.SignalR.SignalRSourceCache<Course, string>("/CourseHub");
+```
+**This immediately creates a connection!**  This may be important when using the authentication overload...
+```
+courseCache = new DynamicData.SignalR.SignalRSourceCache<Course, string>("/CourseHub", access_token);
+```
+You *can* use the `AsObservableCache()` extension to create a read-only copy, but then you will lose the ability (for now) to `Connect()` with a predicate.  The current overload of using a `Func<TObject,bool>` will **not** work since it needs to be an `Expression` like the sample above.
 
 ## Additional dependencies ##
 In addition to the expected AspNetCore stuff, there is a dependency on a library called `Serialize.Linq`.   This is the library that serializes the `Expression`.  
