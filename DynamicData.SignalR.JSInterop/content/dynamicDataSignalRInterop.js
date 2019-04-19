@@ -1,16 +1,21 @@
 ﻿window.dynamicDataSignalR = {
 
     connection : null,
-    idToken : "",
+    accessToken : "",
 
-    createHubConnection: function (hubPath, withAuthentication) {
+    createHubConnection: function (hubPath, accessToken) {
         console.log("Trying to connect to " + hubPath);
-        if (withAuthentication) {
+        this.accessToken = accessToken;
+        if (accessToken !== null) {
             this.connection = new signalR.HubConnectionBuilder()
-                .withUrl(hubPath, { accessTokenFactory: () => this.idToken }).build();
+                .withUrl(hubPath, { accessTokenFactory: () => this.accessToken })
+                .configureLogging(signalR.LogLevel.Trace)
+                .build();
         } else {
             this.connection = new signalR.HubConnectionBuilder()
-                .withUrl(hubPath).build();
+                .withUrl(hubPath)
+                .configureLogging(signalR.LogLevel.Trace)
+                .build();
         }
         return true;
     },
@@ -21,6 +26,11 @@
             dotNetRef.invokeMethodAsync("OnChanges", changesSerialized);
         });
 
+        this.connection.onclose((err) => {
+            console.log("CLOSED!");
+            console.log(JSON.stringify(err));
+        });
+
         return this.connection.start().then(function () {
 
         }).catch(function (err) {
@@ -29,7 +39,6 @@
 
     },
 
-    //MAKE THESE ASYNC RETURN !!
     invoke: function (command, param1, param2, param3, param4, param5, param6) {
         if (param6 !== undefined) {
             return this.connection.invoke(command, param1, param2, param3, param4, param5, param6);

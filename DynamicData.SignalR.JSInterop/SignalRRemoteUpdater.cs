@@ -53,7 +53,7 @@ namespace DynamicData.SignalR.JSInterop
         public override void AddOrUpdate(TObject item)
         {
             base.AddOrUpdate(item);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "AddOrUpdateObject", item);
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "AddOrUpdateObjects", new[] { item });
         }
 
         public override void AddOrUpdate(TObject item, IEqualityComparer<TObject> comparer)
@@ -64,19 +64,19 @@ namespace DynamicData.SignalR.JSInterop
         public override void AddOrUpdate(IEnumerable<KeyValuePair<TKey, TObject>> keyValuePairs)
         {
             base.AddOrUpdate(keyValuePairs);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "AddOrUpdateKeyValuePairs", keyValuePairs);
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "AddOrUpdateObjects", keyValuePairs.Select(x=>x.Value));
         }
 
         public override void AddOrUpdate(KeyValuePair<TKey, TObject> item)
         {
             base.AddOrUpdate(item);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "AddOrUpdateKeyValuePair", item);
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "AddOrUpdateObjects", new[] { item.Value });
         }
 
         public override void AddOrUpdate(TObject item, TKey key)
         {
             base.AddOrUpdate(item, key);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "AddOrUpdateValueWithKey", item, key);
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "AddOrUpdateObjects", new[] { item });
         }
 
 
@@ -131,19 +131,19 @@ namespace DynamicData.SignalR.JSInterop
         public override void Remove(TObject item)
         {
             base.Remove(item);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "RemvoeItem", item);
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "RemvoeItems", new[] { item });
         }
 
         public override void Remove(TKey key)
         {
             base.Remove(key);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "RemoveKey", key);
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "RemoveKeys", new[] { key });
         }
 
         public override void Remove(KeyValuePair<TKey, TObject> item)
         {
             base.Remove(item);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "RemoveKeyValuePair", item);
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "RemoveKeys", new[] { item.Key });
         }
 
 

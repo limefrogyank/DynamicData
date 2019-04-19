@@ -13,14 +13,12 @@ namespace DynamicData.SignalR
         private readonly SignalRObservableCacheBase<TObject, TKey> _innerCache;
         private string _baseUrl;
 
-        public SignalRSourceCache(string baseUrl, Expression<Func<TObject, TKey>> keySelectorExpression)
+        public SignalRSourceCache(string baseUrl, Expression<Func<TObject, TKey>> keySelectorExpression, string accessToken=null)
         {
             _baseUrl = baseUrl;
             if (keySelectorExpression == null) throw new ArgumentNullException(nameof(keySelectorExpression));
-            _innerCache = new SignalRObservableCache<TObject, TKey>(baseUrl, keySelectorExpression);
-            //_innerCache.InitializeSignalR();
-
-            
+            _innerCache = new SignalRObservableCache<TObject, TKey>(baseUrl, keySelectorExpression, accessToken);
+                        
         }
 
 

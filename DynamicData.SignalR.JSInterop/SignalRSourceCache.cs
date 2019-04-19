@@ -15,12 +15,12 @@ namespace DynamicData.SignalR.JSInterop
         private readonly IJSRuntime _jsRuntime;
         private readonly string _baseUrl;
 
-        public SignalRSourceCache(IJSRuntime jsRuntime, string baseUrl, Expression<Func<TObject, TKey>> keySelectorExpression)
+        public SignalRSourceCache(IJSRuntime jsRuntime, string baseUrl, Expression<Func<TObject, TKey>> keySelectorExpression, string accessToken = null)
         {
             _jsRuntime = jsRuntime;
             _baseUrl = baseUrl;
             if (keySelectorExpression == null) throw new ArgumentNullException(nameof(keySelectorExpression));
-            _innerCache = new SignalRObservableCache<TObject, TKey>(jsRuntime, baseUrl, keySelectorExpression);
+            _innerCache = new SignalRObservableCache<TObject, TKey>(jsRuntime, baseUrl, keySelectorExpression, accessToken);
             
         }
 

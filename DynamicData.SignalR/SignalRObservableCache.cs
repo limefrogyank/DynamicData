@@ -23,12 +23,14 @@ namespace DynamicData.SignalR
         private HubConnection _connection;        
 
        
-        public SignalRObservableCache(string baseUrl, Expression<Func<TObject, TKey>> keySelectorExpression)
+        public SignalRObservableCache(string baseUrl, Expression<Func<TObject, TKey>> keySelectorExpression, string accessToken)
             :base(baseUrl, keySelectorExpression)
         {            
             _connection = new HubConnectionBuilder()
                  .WithUrl($"{_baseUrl}", options =>
                  {
+                     if (accessToken != null)
+                         options.AccessTokenProvider = () => Task.FromResult(accessToken);
                  
                      options.HttpMessageHandlerFactory = (handler) =>
                      {

@@ -15,14 +15,14 @@ namespace DynamicData.SignalR
         where TContext : DbContext 
         where TObject : class
     {
-        private readonly TContext _dbContext;
+        protected readonly TContext _dbContext;
 
         public DynamicDataCacheHub(TContext dbContext)
         {
             _dbContext = dbContext;
         }
 
-        private Task SendChangesToOthersAsync(ChangeAwareCache<TObject,TKey> changeAwareCache)
+        protected virtual Task SendChangesToOthersAsync(ChangeAwareCache<TObject,TKey> changeAwareCache)
         {
             var changes = changeAwareCache.CaptureChanges();
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(changes, new ChangeSetConverter<TObject, TKey>());
@@ -41,7 +41,7 @@ namespace DynamicData.SignalR
         }
 
 
-        public Dictionary<TKey, TObject> GetKeyValuePairs()
+        public virtual Dictionary<TKey, TObject> GetKeyValuePairs()
         {
             var keySelector = (Func<TObject,TKey>)Context.Items["KeySelector"];
 
@@ -49,7 +49,7 @@ namespace DynamicData.SignalR
             return data;
         }
 
-        public Task<Dictionary<TKey,TObject>> GetKeyValuePairsFiltered(string predicateFilterString)
+        public virtual Task<Dictionary<TKey,TObject>> GetKeyValuePairsFiltered(string predicateFilterString)
         {
             var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
 
@@ -62,7 +62,7 @@ namespace DynamicData.SignalR
 
 
 
-        public async Task AddOrUpdateObjects(IEnumerable<TObject> items)
+        public virtual async Task AddOrUpdateObjects(IEnumerable<TObject> items)
         {
             var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
             Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
@@ -91,97 +91,97 @@ namespace DynamicData.SignalR
             await SendChangesToOthersAsync(changeAwareCache);
         }
 
-        public async Task AddOrUpdateObject(TObject item)
-        {
-            var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
-            Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
+        //public virtual async Task AddOrUpdateObject(TObject item)
+        //{
+        //    var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+        //    Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
 
-            var key = keySelector.Invoke(item);
-            var found = _dbContext.Set<TObject>().Find(key);
-            if (found != null)
-            {
-                existing.Add(key, found);
-                _dbContext.Entry(found).CurrentValues.SetValues(item);
-            }
-            else
-                _dbContext.Add(item);
+        //    var key = keySelector.Invoke(item);
+        //    var found = _dbContext.Set<TObject>().Find(key);
+        //    if (found != null)
+        //    {
+        //        existing.Add(key, found);
+        //        _dbContext.Entry(found).CurrentValues.SetValues(item);
+        //    }
+        //    else
+        //        _dbContext.Add(item);
 
-            var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);            
-            changeAwareCache.AddOrUpdate(item, key);
+        //    var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);            
+        //    changeAwareCache.AddOrUpdate(item, key);
             
-            var num = _dbContext.SaveChanges();
+        //    var num = _dbContext.SaveChanges();
 
-            await SendChangesToOthersAsync(changeAwareCache);
-            //var changes = changeAwareCache.CaptureChanges();
-            //var json = Newtonsoft.Json.JsonConvert.SerializeObject(changes, new ChangeSetConverter<TObject, TKey>());
-            //await Clients.Others.SendAsync("Changes", json);
-        }
+        //    await SendChangesToOthersAsync(changeAwareCache);
+        //    //var changes = changeAwareCache.CaptureChanges();
+        //    //var json = Newtonsoft.Json.JsonConvert.SerializeObject(changes, new ChangeSetConverter<TObject, TKey>());
+        //    //await Clients.Others.SendAsync("Changes", json);
+        //}
 
-        public async Task AddOrUpdateKeyValuePair(KeyValuePair<TKey, TObject> pair)
-        {
-            Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
+        //public virtual async Task AddOrUpdateKeyValuePair(KeyValuePair<TKey, TObject> pair)
+        //{
+        //    Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
 
-            var found = _dbContext.Set<TObject>().Find(pair.Key);
-            if (found != null)
-            {
-                existing.Add(pair.Key, found);
-                _dbContext.Update(pair.Value);
-            }
-            else
-                _dbContext.Add(pair.Value);
+        //    var found = _dbContext.Set<TObject>().Find(pair.Key);
+        //    if (found != null)
+        //    {
+        //        existing.Add(pair.Key, found);
+        //        _dbContext.Update(pair.Value);
+        //    }
+        //    else
+        //        _dbContext.Add(pair.Value);
 
-            var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
-            changeAwareCache.AddOrUpdate(pair.Value, pair.Key);
+        //    var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
+        //    changeAwareCache.AddOrUpdate(pair.Value, pair.Key);
 
-            _dbContext.SaveChanges();
-            await SendChangesToOthersAsync(changeAwareCache);
-        }
+        //    _dbContext.SaveChanges();
+        //    await SendChangesToOthersAsync(changeAwareCache);
+        //}
 
-        public async Task AddOrUpdateKeyValuePairs(IEnumerable<KeyValuePair<TKey, TObject>> pairs)
-        {
-            Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
+        //public virtual async Task AddOrUpdateKeyValuePairs(IEnumerable<KeyValuePair<TKey, TObject>> pairs)
+        //{
+        //    Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
 
-            foreach (var pair in pairs)
-            {
-                var found = _dbContext.Set<TObject>().Find(pair.Key);
-                if (found != null)
-                {
-                    existing.Add(pair.Key, found);
-                    _dbContext.Update(pair.Value);
-                }
-                else
-                    _dbContext.Add(pair.Value);
-            }
-            var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
+        //    foreach (var pair in pairs)
+        //    {
+        //        var found = _dbContext.Set<TObject>().Find(pair.Key);
+        //        if (found != null)
+        //        {
+        //            existing.Add(pair.Key, found);
+        //            _dbContext.Update(pair.Value);
+        //        }
+        //        else
+        //            _dbContext.Add(pair.Value);
+        //    }
+        //    var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
 
-            foreach (var pair in pairs)
-                changeAwareCache.AddOrUpdate(pair.Value, pair.Key);
+        //    foreach (var pair in pairs)
+        //        changeAwareCache.AddOrUpdate(pair.Value, pair.Key);
 
-            _dbContext.SaveChanges();
-            await SendChangesToOthersAsync(changeAwareCache);
-        }
+        //    _dbContext.SaveChanges();
+        //    await SendChangesToOthersAsync(changeAwareCache);
+        //}
 
-        public async Task AddOrUpdateValueWithKey(TObject item, TKey key)
-        {
-            Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
+        //public virtual async Task AddOrUpdateValueWithKey(TObject item, TKey key)
+        //{
+        //    Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
 
-            var found = _dbContext.Set<TObject>().Find(key);
-            if (found != null)
-            {
-                existing.Add(key, found);
-                _dbContext.Update(item);
-            }
-            else
-                _dbContext.Add(item);
+        //    var found = _dbContext.Set<TObject>().Find(key);
+        //    if (found != null)
+        //    {
+        //        existing.Add(key, found);
+        //        _dbContext.Update(item);
+        //    }
+        //    else
+        //        _dbContext.Add(item);
 
-            var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
-            changeAwareCache.AddOrUpdate(item, key);
+        //    var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
+        //    changeAwareCache.AddOrUpdate(item, key);
 
-            _dbContext.SaveChanges();
-            await SendChangesToOthersAsync(changeAwareCache);
-        }
+        //    _dbContext.SaveChanges();
+        //    await SendChangesToOthersAsync(changeAwareCache);
+        //}
 
-        public async Task RemoveItems(IEnumerable<TObject> items)
+        public virtual async Task RemoveItems(IEnumerable<TObject> items)
         {
             var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
             Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
@@ -207,28 +207,28 @@ namespace DynamicData.SignalR
             await SendChangesToOthersAsync(changeAwareCache);
         }
 
-        public async Task RemoveItem(TObject item)
-        {
-            var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
-            Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
+        //public virtual async Task RemoveItem(TObject item)
+        //{
+        //    var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+        //    Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
             
-            var key = keySelector.Invoke(item);
-            var found = _dbContext.Set<TObject>().Find(key);
-            if (found != null)
-            {
-                existing.Add(key, item);
-                _dbContext.Remove(found);
-            }
+        //    var key = keySelector.Invoke(item);
+        //    var found = _dbContext.Set<TObject>().Find(key);
+        //    if (found != null)
+        //    {
+        //        existing.Add(key, item);
+        //        _dbContext.Remove(found);
+        //    }
 
-            var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
+        //    var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
 
-            changeAwareCache.Remove(key);
+        //    changeAwareCache.Remove(key);
             
-            _dbContext.SaveChanges();
-            await SendChangesToOthersAsync(changeAwareCache);
-        }
+        //    _dbContext.SaveChanges();
+        //    await SendChangesToOthersAsync(changeAwareCache);
+        //}
 
-        public async Task RemoveKeys(IEnumerable<TKey> keys)
+        public virtual async Task RemoveKeys(IEnumerable<TKey> keys)
         {
             Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
 
@@ -252,68 +252,68 @@ namespace DynamicData.SignalR
             await SendChangesToOthersAsync(changeAwareCache);
         }
 
-        public async Task RemoveKey(TKey key)
-        {
-            Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
+        //public virtual async Task RemoveKey(TKey key)
+        //{
+        //    Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
             
-            var found = _dbContext.Set<TObject>().Find(key);
-            if (found != null)
-            {
-                existing.Add(key, found);
-                _dbContext.Remove(found);
-            }
+        //    var found = _dbContext.Set<TObject>().Find(key);
+        //    if (found != null)
+        //    {
+        //        existing.Add(key, found);
+        //        _dbContext.Remove(found);
+        //    }
             
-            var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
-            changeAwareCache.Remove(key);
+        //    var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
+        //    changeAwareCache.Remove(key);
 
 
-            _dbContext.SaveChanges();
-            await SendChangesToOthersAsync(changeAwareCache);
-        }
+        //    _dbContext.SaveChanges();
+        //    await SendChangesToOthersAsync(changeAwareCache);
+        //}
 
-        public async Task RemoveKeyValuePairs(IEnumerable<KeyValuePair<TKey,TObject>> pairs)
-        {
-            Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
+        //public virtual async Task RemoveKeyValuePairs(IEnumerable<KeyValuePair<TKey,TObject>> pairs)
+        //{
+        //    Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
 
-            foreach (var pair in pairs)
-            {
-                var found = _dbContext.Set<TObject>().Find(pair.Key);
-                if (found != null)
-                {
-                    existing.Add(pair.Key, found);
-                    _dbContext.Remove(found);
-                }
-            }
+        //    foreach (var pair in pairs)
+        //    {
+        //        var found = _dbContext.Set<TObject>().Find(pair.Key);
+        //        if (found != null)
+        //        {
+        //            existing.Add(pair.Key, found);
+        //            _dbContext.Remove(found);
+        //        }
+        //    }
 
-            var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
-            foreach (var pair in existing)
-            {
-                changeAwareCache.Remove(pair.Key);
-            }
+        //    var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
+        //    foreach (var pair in existing)
+        //    {
+        //        changeAwareCache.Remove(pair.Key);
+        //    }
 
-            _dbContext.SaveChanges();
-            await SendChangesToOthersAsync(changeAwareCache);
-        }
+        //    _dbContext.SaveChanges();
+        //    await SendChangesToOthersAsync(changeAwareCache);
+        //}
 
-        public async Task RemoveKeyValuePair(KeyValuePair<TKey, TObject> pair)
-        {
-            Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
+        //public virtual async Task RemoveKeyValuePair(KeyValuePair<TKey, TObject> pair)
+        //{
+        //    Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
 
-            var found = _dbContext.Set<TObject>().Find(pair.Key);
-            if (found != null)
-            {
-                existing.Add(pair.Key, found);
-                _dbContext.Remove(found);
-            }
+        //    var found = _dbContext.Set<TObject>().Find(pair.Key);
+        //    if (found != null)
+        //    {
+        //        existing.Add(pair.Key, found);
+        //        _dbContext.Remove(found);
+        //    }
             
-            var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
-            changeAwareCache.Remove(pair.Key);
+        //    var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
+        //    changeAwareCache.Remove(pair.Key);
 
-            _dbContext.SaveChanges();
-            await SendChangesToOthersAsync(changeAwareCache);
-        }
+        //    _dbContext.SaveChanges();
+        //    await SendChangesToOthersAsync(changeAwareCache);
+        //}
 
-        public async Task RefreshKeys(IEnumerable<TKey> keys)
+        public virtual async Task RefreshKeys(IEnumerable<TKey> keys)
         {
             Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
 
@@ -332,7 +332,7 @@ namespace DynamicData.SignalR
             await SendChangesToOthersAsync(changeAwareCache);
         }
 
-        public async Task Clone(string changeSetString)
+        public virtual async Task Clone(string changeSetString)
         {
             var changeSet = Newtonsoft.Json.JsonConvert.DeserializeObject<ChangeSet<TObject, TKey>>(changeSetString, new ChangeSetConverter<TObject, TKey>());
 

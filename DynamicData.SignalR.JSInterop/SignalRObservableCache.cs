@@ -37,15 +37,18 @@ namespace DynamicData.SignalR
         //private int _editLevel; // The level of recursion in editing.
 
         private readonly IJSRuntime _jsRuntime;
+        private readonly string _accessToken;
+
         //private readonly string _baseUrl;
         //private readonly Expression<Func<TObject, TKey>> _keySelectorExpression;
         //private Task initializationTask;
 
-        public SignalRObservableCache(IJSRuntime jsRuntime, string baseUrl, Expression<Func<TObject, TKey>> keySelectorExpression)
+        public SignalRObservableCache(IJSRuntime jsRuntime, string baseUrl, Expression<Func<TObject, TKey>> keySelectorExpression, string accessToken)
             : base(baseUrl, keySelectorExpression)
         {
             _jsRuntime = jsRuntime;
-      
+            _accessToken = accessToken;
+
             _readerWriter = new SignalRReaderWriter<TObject, TKey>(_jsRuntime, keySelectorExpression);
 
             var changeSubscription = _readerWriter.Changes.Subscribe((changeSet) =>
@@ -73,20 +76,16 @@ namespace DynamicData.SignalR
             {
                 try
                 {
-                    var result = await _jsRuntime.InvokeAsync<bool>("dynamicDataSignalR.createHubConnection", _baseUrl, false);
+                    var result = await _jsRuntime.InvokeAsync<bool>("dynamicDataSignalR.createHubConnection", _baseUrl, _accessToken);
 
                     //sending readerWriter as reference to invoke Changes callback on...
                     await _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.connect", new DotNetObjectRef(_readerWriter));
-
-                    //await _connection.StartAsync();
 
                     var serializer = new ExpressionSerializer(new JsonSerializer());
                     var expressionString = serializer.SerializeText(_keySelectorExpression);
 
                     await _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "Initialize", expressionString);
-
-                    //await _connection.InvokeAsync("Send", expressionString);
-
+                                       
                     Debug.WriteLine("Connection initialized");
                 }
                 catch

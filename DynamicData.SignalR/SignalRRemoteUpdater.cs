@@ -57,7 +57,7 @@ namespace DynamicData.SignalR
         public override void AddOrUpdate(TObject item)
         {
             base.AddOrUpdate(item);
-            _connection.InvokeAsync("AddOrUpdateObject", item);
+            _connection.InvokeAsync("AddOrUpdateObjects", new[] { item });
         }
 
         public override void AddOrUpdate(TObject item, IEqualityComparer<TObject> comparer)
@@ -68,19 +68,19 @@ namespace DynamicData.SignalR
         public override void AddOrUpdate(IEnumerable<KeyValuePair<TKey, TObject>> keyValuePairs)
         {
             base.AddOrUpdate(keyValuePairs);
-            _connection.InvokeAsync("AddOrUpdateKeyValuePairs", keyValuePairs);
+            _connection.InvokeAsync("AddOrUpdateObjects", keyValuePairs.Select(x => x.Value));
         }
 
         public override void AddOrUpdate(KeyValuePair<TKey, TObject> item)
         {
             base.AddOrUpdate(item);
-            _connection.InvokeAsync("AddOrUpdateKeyValuePair", item);
+            _connection.InvokeAsync("AddOrUpdateObjects", new[] { item.Value });
         }
 
         public override void AddOrUpdate(TObject item, TKey key)
         {
             base.AddOrUpdate(item, key);
-            _connection.InvokeAsync("AddOrUpdateValueWithKey", item, key);
+            _connection.InvokeAsync("AddOrUpdateObjects", new[] { item });
         }
 
         public override void Clear()
@@ -165,7 +165,7 @@ namespace DynamicData.SignalR
         public override void Remove(TObject item)
         {
             base.Remove(item);
-            _connection.InvokeAsync("RemoveItem", item);
+            _connection.InvokeAsync("RemoveItems", new[] { item });
         }
 
         //public void Remove(IEnumerable<TKey> keys)
@@ -189,7 +189,7 @@ namespace DynamicData.SignalR
         public override void Remove(TKey key)
         {
             base.Remove(key);
-            _connection.InvokeAsync("RemoveKey", key);
+            _connection.InvokeAsync("RemoveKeys", new[] { key });
         }
 
         //public void Remove(IEnumerable<KeyValuePair<TKey, TObject>> items)
@@ -200,7 +200,7 @@ namespace DynamicData.SignalR
         public override void Remove(KeyValuePair<TKey, TObject> item)
         {
             base.Remove(item);
-            _connection.InvokeAsync("RemoveKeyValuePair", item);
+            _connection.InvokeAsync("RemoveKeys", new[] { item.Key });
         }
 
 
