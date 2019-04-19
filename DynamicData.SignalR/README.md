@@ -18,6 +18,13 @@ See the sample aspnetcore app for an example of how to setup SignalR and use the
 ## Create a SignalR Hub two ways
 
 ### DynamicDataHub<TObject,TKey,TContext> 
+Just put this into your `Startup.cs` where you map your SignalR hubs like so:
+```
+ app.UseSignalR(routes =>
+            {
+                outes.MapHub<DynamicData.SignalR.DynamicDataCacheHub<CustomModel, string, DatabaseContext>>("/CustomHub");
+            });
+```
 
 
 ## Additional dependencies ##
