@@ -151,7 +151,6 @@ namespace DynamicData.SignalR
             (
                 observer =>
                 {
-                    //lock (_locker)
                     var result = _slocker.Lock(() =>
                     {
                         var initial = _readerWriter.Lookup(key);

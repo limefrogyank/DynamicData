@@ -22,7 +22,7 @@ namespace DynamicData.SignalR
 
         //private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
         private HubConnection _connection;
-        private readonly SemaphoreLocker _slocker = new SemaphoreLocker();
+        //private readonly SemaphoreLocker _slocker = new SemaphoreLocker();
         //private readonly object _locker = new object();
 
         public SignalRReaderWriter(HubConnection connection, Expression<Func<TObject, TKey>> keySelectorExpression = null)
@@ -156,74 +156,64 @@ namespace DynamicData.SignalR
             return result;
         }
 
-        public TKey[] Keys
-        {
-            get
-            {
-                //lock (_locker)
-                return _slocker.Lock(() =>
-                {
-                    TKey[] result = new TKey[_data.Count];
-                    _data.Keys.CopyTo(result, 0);
-                    return result;
-                });
-            }
-        }
+        //public TKey[] Keys
+        //{
+        //    get
+        //    {
+        //        //lock (_locker)
+        //        return _slocker.Lock(() =>
+        //        {
+        //            TKey[] result = new TKey[_data.Count];
+        //            _data.Keys.CopyTo(result, 0);
+        //            return result;
+        //        });
+        //    }
+        //}
 
-        public KeyValuePair<TKey, TObject>[] KeyValues
-        {
-            get
-            {
-                //lock (_locker)
-                return _slocker.Lock(() =>
-                {
-                    KeyValuePair<TKey, TObject>[] result = new KeyValuePair<TKey, TObject>[_data.Count];
-                    int i = 0;
-                    foreach (var kvp in _data)
-                    {
-                        result[i] = kvp;
-                        i++;
-                    }
+        //public KeyValuePair<TKey, TObject>[] KeyValues
+        //{
+        //    get
+        //    {
+        //        //lock (_locker)
+        //        return _slocker.Lock(() =>
+        //        {
+        //            KeyValuePair<TKey, TObject>[] result = new KeyValuePair<TKey, TObject>[_data.Count];
+        //            int i = 0;
+        //            foreach (var kvp in _data)
+        //            {
+        //                result[i] = kvp;
+        //                i++;
+        //            }
 
-                    return result;
-                });
-            }
-        }
+        //            return result;
+        //        });
+        //    }
+        //}
 
-        public TObject[] Items
-        {
-            get
-            {
-                //lock (_locker)
-                return _slocker.Lock(() =>
-                {
-                    TObject[] result = new TObject[_data.Count];
-                    _data.Values.CopyTo(result, 0);
-                    return result;
-                });
-            }
-        }
+        //public TObject[] Items
+        //{
+        //    get
+        //    {
+        //        //lock (_locker)
+        //        return _slocker.Lock(() =>
+        //        {
+        //            TObject[] result = new TObject[_data.Count];
+        //            _data.Values.CopyTo(result, 0);
+        //            return result;
+        //        });
+        //    }
+        //}
 
-        public Optional<TObject> Lookup(TKey key)
-        {
-            //lock (_locker)
-            return _slocker.Lock(() =>
-            {
-                return _data.Lookup(key);
-            });
-        }
+        //public Optional<TObject> Lookup(TKey key)
+        //{
+        //    //lock (_locker)
+        //    return _slocker.Lock(() =>
+        //    {
+        //        return _data.Lookup(key);
+        //    });
+        //}
 
-        public int Count
-        {
-            get
-            {
-                return _slocker.Lock<int>(() =>
-                {
-                    //(_locker)
-                    return _data.Count;
-                });
-            }
-        }
+        
 
         #endregion
     }

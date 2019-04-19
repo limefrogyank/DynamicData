@@ -49,7 +49,13 @@ namespace DynamicData.SignalR.JSInterop
             //_keySelector = _keySelectorExpression.Compile();
         }
 
+        public void InitializeHelper(ChangeInvokeHelper changeInvokeHelper)
+        {
+            changeInvokeHelper.Initialize(OnChanges);
+        }
+
         //this is the method that javascript SignalR calls on change received
+        //[JSInvokable]
         public void OnChanges(string changeSetJson)
         {
             var changeSet = Newtonsoft.Json.JsonConvert.DeserializeObject<ChangeSet<TObject, TKey>>(changeSetJson, new ChangeSetConverter<TObject, TKey>());

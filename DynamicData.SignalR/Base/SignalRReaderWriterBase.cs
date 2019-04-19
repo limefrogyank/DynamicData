@@ -33,6 +33,7 @@ namespace DynamicData.SignalR
             _keySelector = _keySelectorExpression.Compile();
         }
 
+        
         protected ChangeSet<TObject, TKey> ReplaceInstancesWithCachedInstances(ChangeSet<TObject, TKey> deserializedChanges)
         {
             var localChangeSet = new ChangeSet<TObject, TKey>();

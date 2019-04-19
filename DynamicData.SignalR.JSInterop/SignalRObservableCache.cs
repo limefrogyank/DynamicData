@@ -39,6 +39,7 @@ namespace DynamicData.SignalR
         private readonly IJSRuntime _jsRuntime;
         private readonly string _accessToken;
 
+        private SignalRReaderWriter<TObject, TKey> backupReference;
         //private readonly string _baseUrl;
         //private readonly Expression<Func<TObject, TKey>> _keySelectorExpression;
         //private Task initializationTask;
@@ -49,7 +50,9 @@ namespace DynamicData.SignalR
             _jsRuntime = jsRuntime;
             _accessToken = accessToken;
 
-            _readerWriter = new SignalRReaderWriter<TObject, TKey>(_jsRuntime, keySelectorExpression);
+
+            backupReference = new SignalRReaderWriter<TObject, TKey>(_jsRuntime, keySelectorExpression);
+            _readerWriter = backupReference;
 
             var changeSubscription = _readerWriter.Changes.Subscribe((changeSet) =>
             {
@@ -79,7 +82,13 @@ namespace DynamicData.SignalR
                     var result = await _jsRuntime.InvokeAsync<bool>("dynamicDataSignalR.createHubConnection", _baseUrl, _accessToken);
 
                     //sending readerWriter as reference to invoke Changes callback on...
-                    await _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.connect", new DotNetObjectRef(_readerWriter));
+                    //await _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.connect", new DotNetObjectRef((SignalRReaderWriter<TObject,TKey>)_readerWriter));
+
+                    var changeInvokeHelper = new ChangeInvokeHelper();
+                    backupReference.InitializeHelper(changeInvokeHelper);
+                    await _jsRuntime.InvokeAsync<object>(
+                        "dynamicDataSignalR.connect",
+                        new DotNetObjectRef(changeInvokeHelper));
 
                     var serializer = new ExpressionSerializer(new JsonSerializer());
                     var expressionString = serializer.SerializeText(_keySelectorExpression);
