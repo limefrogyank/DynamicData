@@ -26,7 +26,7 @@ namespace DynamicData.Tests.Cache
 
         private readonly ISourceCache<Person, string> _source;
         private readonly ISubject<Unit> _refreshSubject = new Subject<Unit>();
-        private readonly IObservableCache<IGroup<Person, string, AgeBracket>, AgeBracket> _grouped;
+        private readonly IObservableCacheAsync<IGroup<Person, string, AgeBracket>, AgeBracket> _grouped;
 
         public  GroupControllerForFilteredItemsFixture()
         {

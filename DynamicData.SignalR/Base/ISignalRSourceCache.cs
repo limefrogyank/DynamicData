@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace DynamicData.SignalR
 {
-    public interface ISourceCacheAsync<TObject, TKey>
+    public interface ISignalRSourceCache<TObject, TKey>: ISourceCache<TObject,TKey>
     {
         Task EditAsync(Action<ISourceUpdater<TObject, TKey>> updateAction);
 

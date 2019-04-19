@@ -9,7 +9,7 @@ using Microsoft.JSInterop;
 namespace DynamicData.SignalR.JSInterop
 {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-    public class SignalRSourceCache<TObject, TKey> : ISourceCache<TObject, TKey>, ISourceCacheAsync<TObject, TKey>
+    public class SignalRSourceCache<TObject, TKey> : ISignalRSourceCache<TObject, TKey>, ISignalRObservableCache<TObject, TKey>
     {
         private readonly SignalRObservableCacheBase<TObject, TKey> _innerCache;
         private readonly IJSRuntime _jsRuntime;
@@ -38,7 +38,7 @@ namespace DynamicData.SignalR.JSInterop
 
         public IObservable<IChangeSet<TObject, TKey>> Connect(Func<TObject, bool> predicate = null) => _innerCache.Connect(predicate);
 
-        public IObservable<IChangeSet<TObject, TKey>> ConnectWithPredicate(Expression<Func<TObject, bool>> predicateExpression = null) => _innerCache.Connect(predicateExpression);
+        public IObservable<IChangeSet<TObject, TKey>> Connect(Expression<Func<TObject, bool>> predicateExpression = null) => _innerCache.Connect(predicateExpression);
 
         public void Dispose() => _innerCache.Dispose();
 

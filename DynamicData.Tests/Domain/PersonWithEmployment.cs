@@ -14,7 +14,7 @@ namespace DynamicData.Tests.Domain
 
         public string Person => _source.Key;
 
-        public IObservableCache<PersonEmployment, PersonEmpKey> EmploymentData { get; }
+        public IObservableCacheAsync<PersonEmployment, PersonEmpKey> EmploymentData { get; }
 
         public int EmploymentCount => EmploymentData.Count;
 

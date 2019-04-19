@@ -10,7 +10,7 @@ namespace DynamicData.Tests.Cache
     public class TransformTreeFixture: IDisposable
     {
         private readonly ISourceCache<EmployeeDto, int> _sourceCache;
-        private readonly IObservableCache<Node<EmployeeDto, int>, int> _result;
+        private readonly IObservableCacheAsync<Node<EmployeeDto, int>, int> _result;
         private readonly BehaviorSubject<Func<Node<EmployeeDto, int>, bool>> _filter;
 
         public  TransformTreeFixture()

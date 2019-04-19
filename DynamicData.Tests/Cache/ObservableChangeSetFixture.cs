@@ -144,7 +144,7 @@ namespace DynamicData.Tests.Cache
 
         private void SubscribeAndAssert<TObject,TKey>(IObservable<IChangeSet<TObject, TKey>> observableChangeset,  
             bool expectsError = false,
-            Action<IObservableCache<TObject, TKey>> checkContentAction = null)
+            Action<IObservableCacheAsync<TObject, TKey>> checkContentAction = null)
         {
             Exception error = null;
             bool complete = false;
