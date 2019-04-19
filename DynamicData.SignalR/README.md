@@ -80,11 +80,22 @@ var body = Expression.PropertyOrField(param, "Id");
 var lambda = Expression.Lambda<Func<Course, string>>(body, param);
 courseCache = new DynamicData.SignalR.SignalRSourceCache<Course, string>("/CourseHub");
 ```
-**This immediately creates a connection!**  This may be important when using the authentication overload...
+**This immediately creates a connection asynchronously!**  This may be important when using the authentication overload...
 ```
-courseCache = new DynamicData.SignalR.SignalRSourceCache<Course, string>("/CourseHub", access_token);
+courseCache = new DynamicData.SignalR.SignalRSourceCache<Course, string>("/CourseHub", authService.accessToken);
 ```
 You *can* use the `AsObservableCache()` extension to create a read-only copy, but then you will lose the ability (for now) to `Connect()` with a predicate.  The current overload of using a `Func<TObject,bool>` will **not** work since it needs to be an `Expression` like the sample above.
+
+Since the connection is created asynchronously, to be sure that you are ready to edit the `SignalRSourceCache`, you should use the `AddOrUpdateAsync`, `EditAsync`, etc extensions in `DynamicData.SignalR`.  You *might* be able to get away with the synchronous versions if there is a guaranteed signficant timespan between the cache creation and an edit.
+```
+courseCache.AddOrUpdateAsync(new Course()
+{
+    Id = Guid.NewGuid().ToString(),
+    DisplayName = courseName,
+    OwnerId = authService.UserId
+});
+```
+
 
 ## Additional dependencies ##
 In addition to the expected AspNetCore stuff, there is a dependency on a library called `Serialize.Linq`.   This is the library that serializes the `Expression`.  
