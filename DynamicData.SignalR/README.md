@@ -17,13 +17,58 @@ See the sample aspnetcore app for an example of how to setup SignalR and use the
 
 ## Create a SignalR Hub two ways
 
-### DynamicDataHub<TObject,TKey,TContext> 
+### `DynamicDataHub<TObject,TKey,TContext>`
 Just put this into your `Startup.cs` where you map your SignalR hubs like so:
 ```
  app.UseSignalR(routes =>
+ {
+     routes.MapHub<DynamicData.SignalR.DynamicDataCacheHub<CustomModel, string, DatabaseContext>>("/CustomHub");
+ });
+```
+`TObject` is your model, `TKey` is your cache key AND your database primary key, and `TContext` is your EntityFrameworkCore `DbContext` class.  That's all that's needed.
+
+### `abstract DynamicDataPredicateHub<TObject,TKey,TContext>` 
+This is the hub you'll need if you want to use Authentication of some kind.  You'll have to subclass it so that you can create the logic that determines what the user is allowed to access from the database.  SignalR creates a new Hub instance for each method call, so you have to store two variables in the `Context.Items` dictionary.
+
+`Context.Items["GroupIdentifier"]` -> this is a string that will limit who gets `ChangeSet` messages.  The most likely scenario is to restrict those messages to a particular logged in user.  If that user has more than one `SignalRSourceCache` connecting to this hub, while they have different ConnectionIds, by setting the GroupIdentifier as an authenticated userId, only your `SignalRSourceCache`s will get those messages.
+`Context.Items["WherePredicate"]` -> You need to tell the hub how to limit queries to the database for each user.  The most likely scenarios is one where your models have an `OwnerId` field.  You will want to limit all queries for a user to items that they own.
+
+An example might look like this:
+```
+public class CourseHub : DynamicData.SignalR.DynamicDataPredicateHub<Course, string, DatabaseContext>
+    {
+        public CourseHub(DatabaseContext databaseContext): base(databaseContext)
+        { }
+
+        public override async Task OnConnectedAsync()
+        {
+            var userId = GetUserId();
+            Context.Items["GroupIdentifier"] = userId;
+            Context.Items["WherePredicate"] = (Func<Course,bool>)( (course) => course.OwnerId == userId);
+                    
+            await base.OnConnectedAsync();
+        }
+
+        string GetUserId()
+        {
+            string userId = "";
+            if (Context.User.Identity.IsAuthenticated)
             {
-                outes.MapHub<DynamicData.SignalR.DynamicDataCacheHub<CustomModel, string, DatabaseContext>>("/CustomHub");
-            });
+                var issClaim = Context.User.Claims.FirstOrDefault(x => x.Type == "iss");
+                if (issClaim != null)
+                {
+                    if (issClaim.Value.Contains("microsoftonline"))
+                    {
+                        var userIdClaim = Context.User.Claims.FirstOrDefault(x => x.Type == "http://schemas.microsoft.com/identity/claims/objectidentifier");
+                        if (userIdClaim != null)
+                            userId= userIdClaim.Value;
+                    }
+
+                }
+            }
+            return userId;
+        }
+    }
 ```
 
 
