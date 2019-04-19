@@ -88,6 +88,10 @@ namespace DynamicData.SignalR.Tests
 
             result.HasValue.Should().BeTrue();
             result.Value.Should().Be(100, "Count should be 100");
+
+            await _source.ClearAsync();
+            result.Value.Should().Be(0, "Count should be 0");
+            
             subscription.Dispose();
         }
 
@@ -102,12 +106,15 @@ namespace DynamicData.SignalR.Tests
                 .Subscribe(updates => { called = true; }, ex => errored = true, () => completed = true);
             await _source.AddOrUpdateAsync(new Person("Adult1", 40));
 
+            await _source.ClearAsync();
+
             subscription.Dispose();
             _source.Dispose();
 
             errored.Should().BeFalse();
             called.Should().BeTrue();
             completed.Should().BeTrue();
+            
         }
 
         [Fact]
@@ -126,15 +133,12 @@ namespace DynamicData.SignalR.Tests
 
                 var persons = new RandomPersonGenerator().Take(100);
                 await _source.AddOrUpdateAsync(persons);
-                                
-
+                            
                 invoked.Should().Be(2);
                 count.Should().Be(100);
 
                 await _source.ClearAsync();
-
                 
-
                 invoked.Should().Be(3);
                 count.Should().Be(0);
             }

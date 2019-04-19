@@ -49,7 +49,7 @@ namespace DynamicData.SignalR
             return data;
         }
 
-        public Dictionary<TKey,TObject> GetKeyValuePairsFiltered(string predicateFilterString)
+        public Task<Dictionary<TKey,TObject>> GetKeyValuePairsFiltered(string predicateFilterString)
         {
             var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
 
@@ -57,7 +57,7 @@ namespace DynamicData.SignalR
             var filterExpression = (Expression<Func<TObject, bool>>)deserializer.DeserializeText(predicateFilterString);
 
             var data = _dbContext.Set<TObject>().Where(filterExpression).ToDictionary((o) => keySelector.Invoke(o));
-            return data;
+            return Task.FromResult(data);
         }
 
 

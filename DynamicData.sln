@@ -28,11 +28,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DynamicData.Benchmarks", "D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DynamicData.SignalR", "DynamicData.SignalR\DynamicData.SignalR.csproj", "{CA83E7E3-AFA1-44BD-9C79-ECFC27172954}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicData.SignalR.TestWebApp", "DynamicData.SignalR.TestWebApp\DynamicData.SignalR.TestWebApp.csproj", "{19FBC911-8444-47ED-9CDA-45D97594D75B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DynamicData.SignalR.TestWebApp", "DynamicData.SignalR.TestWebApp\DynamicData.SignalR.TestWebApp.csproj", "{19FBC911-8444-47ED-9CDA-45D97594D75B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicData.SignalR.TestModel", "DynamicData.SignalR.TestModel\DynamicData.SignalR.TestModel.csproj", "{16141EBD-0109-4140-AF0D-2D3BE7A2C8CC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DynamicData.SignalR.TestModel", "DynamicData.SignalR.TestModel\DynamicData.SignalR.TestModel.csproj", "{16141EBD-0109-4140-AF0D-2D3BE7A2C8CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicData.SignalR.Tests", "DynamicData.SignalR.Tests\DynamicData.SignalR.Tests.csproj", "{2158A21C-097D-4C6A-9D05-26162D768D23}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DynamicData.SignalR.Tests", "DynamicData.SignalR.Tests\DynamicData.SignalR.Tests.csproj", "{2158A21C-097D-4C6A-9D05-26162D768D23}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DynamicData.SignalR.JSInterop", "DynamicData.SignalR.JSInterop\DynamicData.SignalR.JSInterop.csproj", "{81B12529-2B82-4B92-A9EB-E1C9813FB95A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -202,6 +204,22 @@ Global
 		{2158A21C-097D-4C6A-9D05-26162D768D23}.Release|x64.Build.0 = Release|Any CPU
 		{2158A21C-097D-4C6A-9D05-26162D768D23}.Release|x86.ActiveCfg = Release|Any CPU
 		{2158A21C-097D-4C6A-9D05-26162D768D23}.Release|x86.Build.0 = Release|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Debug|x64.Build.0 = Debug|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Debug|x86.Build.0 = Debug|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Release|x64.ActiveCfg = Release|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Release|x64.Build.0 = Release|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Release|x86.ActiveCfg = Release|Any CPU
+		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

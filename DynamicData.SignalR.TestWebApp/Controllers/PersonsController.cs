@@ -6,10 +6,12 @@ using DynamicData.SignalR.TestModel;
 using DynamicData.SignalR.TestWebApp.Data;
 using Microsoft.AspNetCore.Mvc;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+// This controller is NOT necessary for the DynamicData/SignalR SourceCache.  
+// It's only here to verify information written to the database.
+
 
 namespace DynamicData.SignalR.TestWebApp.Controllers
-{
+{    
     [Route("api/[controller]")]
     public class PersonsController : Controller
     {

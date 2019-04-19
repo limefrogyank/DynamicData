@@ -4,3 +4,4 @@
 [assembly: InternalsVisibleTo("DynamicData.ReactiveUI")]
 [assembly: InternalsVisibleTo("DynamicData.Profile")]
 [assembly: InternalsVisibleTo("DynamicData.SignalR")]
+[assembly: InternalsVisibleTo("DynamicData.SignalR.JSInterop")]
