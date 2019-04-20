@@ -78,11 +78,11 @@ For the most part, this is used very similarly to the standard `SourceCache<TObj
 var param = Expression.Parameter(typeof(Course), "course");
 var body = Expression.PropertyOrField(param, "Id");
 var lambda = Expression.Lambda<Func<Course, string>>(body, param);
-courseCache = new DynamicData.SignalR.SignalRSourceCache<Course, string>("/CourseHub");
+courseCache = new DynamicData.SignalR.SignalRSourceCache<Course, string>("/CourseHub", lambda);
 ```
 **This immediately creates a connection asynchronously!**  This may be important when using the authentication overload...
 ```
-courseCache = new DynamicData.SignalR.SignalRSourceCache<Course, string>("/CourseHub", authService.accessToken);
+courseCache = new DynamicData.SignalR.SignalRSourceCache<Course, string>("/CourseHub", lambda, authService.accessToken);
 ```
 You *can* use the `AsObservableCache()` extension to create a read-only copy, but then you will lose the ability (for now) to `Connect()` with a predicate.  The current overload of using a `Func<TObject,bool>` will **not** work since it needs to be an `Expression` like the sample above.
 
