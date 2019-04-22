@@ -38,7 +38,7 @@ namespace DynamicData.SignalR.JSInterop
 
         public IObservable<IChangeSet<TObject, TKey>> Connect(Func<TObject, bool> predicate = null) => _innerCache.Connect(predicate);
 
-        public IObservable<IChangeSet<TObject, TKey>> Connect(Expression<Func<TObject, bool>> predicateExpression = null) => _innerCache.Connect(predicateExpression);
+        public IObservable<IChangeSet<TObject, TKey>> Connect(Expression<Func<TObject, bool>> predicateExpression) => _innerCache.Connect(predicateExpression);
 
         public void Dispose() => _innerCache.Dispose();
 

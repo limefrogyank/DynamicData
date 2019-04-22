@@ -1,0 +1,30 @@
+﻿@page "/"
+
+@using DynamicData.SignalR.JSInterop
+@using DynamicData.SignalR.TestModel
+@using DynamicData
+
+@inject IJSRuntime jsRuntime
+
+@functions { 
+
+    MainViewModel mainViewModel;
+
+
+    protected override Task OnAfterRenderAsync()
+    {
+        if (mainViewModel == null)
+        {
+            mainViewModel = new MainViewModel(jsRuntime);
+
+            mainViewModel.People.CollectionChanged += People_CollectionChanged;
+        }
+
+        return base.OnAfterRenderAsync();
+    }
+
+    private void People_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        StateHasChanged();
+    }
+}

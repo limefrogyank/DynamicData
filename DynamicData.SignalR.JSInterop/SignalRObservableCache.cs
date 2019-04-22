@@ -81,9 +81,7 @@ namespace DynamicData.SignalR
                 {
                     var result = await _jsRuntime.InvokeAsync<bool>("dynamicDataSignalR.createHubConnection", _baseUrl, _accessToken);
 
-                    //sending readerWriter as reference to invoke Changes callback on...
-                    //await _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.connect", new DotNetObjectRef((SignalRReaderWriter<TObject,TKey>)_readerWriter));
-
+                    //Need the InvokeHelper because Blazor can't invoke .NET from JS if the instances are generic classes.
                     var changeInvokeHelper = new ChangeInvokeHelper();
                     backupReference.InitializeHelper(changeInvokeHelper);
                     await _jsRuntime.InvokeAsync<object>(

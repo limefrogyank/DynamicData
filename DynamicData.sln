@@ -36,6 +36,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DynamicData.SignalR.Tests",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DynamicData.SignalR.JSInterop", "DynamicData.SignalR.JSInterop\DynamicData.SignalR.JSInterop.csproj", "{81B12529-2B82-4B92-A9EB-E1C9813FB95A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicData.SignalR.JSInterop.TestBlazorApp", "DynamicData.SignalR.JSInterop.TestBlazorApp\DynamicData.SignalR.JSInterop.TestBlazorApp.csproj", "{2BC96D82-5520-4BE9-8D9C-85E169BC446F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -220,6 +222,22 @@ Global
 		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Release|x64.Build.0 = Release|Any CPU
 		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Release|x86.ActiveCfg = Release|Any CPU
 		{81B12529-2B82-4B92-A9EB-E1C9813FB95A}.Release|x86.Build.0 = Release|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Debug|x64.Build.0 = Debug|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Debug|x86.Build.0 = Debug|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Release|x64.ActiveCfg = Release|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Release|x64.Build.0 = Release|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Release|x86.ActiveCfg = Release|Any CPU
+		{2BC96D82-5520-4BE9-8D9C-85E169BC446F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

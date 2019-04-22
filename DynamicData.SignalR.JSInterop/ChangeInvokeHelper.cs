@@ -24,7 +24,6 @@ namespace DynamicData.SignalR.JSInterop
         [JSInvokable]
         public void OnChanges(string changeSetJson)
         {
-            //var changeSet = Newtonsoft.Json.JsonConvert.DeserializeObject<ChangeSet<TObject, TKey>>(changeSetJson, new ChangeSetConverter<TObject, TKey>());
             _callback?.Invoke(changeSetJson);
         }
       
