@@ -1,6 +1,6 @@
-## You must use netcore v3 (preview) for this to work! ##
+## You must use netcore v4 (preview) for this to work! ##
 
-See the sample aspnetcore app for an example of how to setup SignalR and use the generic hub, `DynamicDataHub<TObject,TKey,TContext>`.  You must be using EntityFrameworkCore and some kind of database (any will do).  The sample uses Sqlite for convenience.
+See the sample aspnetcore app for an example of how to setup SignalR and use one of the two generic hubs listed below.  You must be using EntityFrameworkCore and some kind of database (any will do).  The sample uses Sqlite for convenience.
 
 
 ## The way SignalR works with DynamicData: ##
