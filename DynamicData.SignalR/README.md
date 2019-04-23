@@ -71,6 +71,31 @@ public class CourseHub : DynamicData.SignalR.DynamicDataPredicateHub<Course, str
         }
     }
 ```
+### Customizing EntityFrameworkCore query even further
+If you want to `Include` foreign key relationships into your regular class, you can do that by subclassing either of the two hubs above and adding some string array parameters to the `Context.Items` dictionary under the key `IncludeChain`.
+
+For example, if your `DbContext` would be setup like this, where there is a one-to-many relationship between `Owner` and `Course` (i.e. one owner can have many courses):
+
+```
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<Course>()
+        .HasOne(c => c.Owner)
+        .WithMany(u => u.Courses)
+        .HasForeignKey(c => c.OwnerId)
+        .HasConstraintName("FK_Course_User")
+        .IsRequired();
+    base.OnModelCreating(modelBuilder); 
+}
+```
+To get EntityFrameworkCore to actually include the `Owner` model in your `Course` query, you have to specifically add `.Include(course=>course.Owner)`.  Instead of rewriting the `DynamicDataHub`, just override `OnConnectedAsync` and add this:
+
+```
+Context.Items["IncludeChain"] = new List<string>() { "Owner" };
+```
+
+That's it.  You can add multiple string paths to the properties you want to include.
+
 ## Using the `SignalRSourceCache<TObject,TKey>`
 
 For the most part, this is used very similarly to the standard `SourceCache<TObject,TKey>`.  
