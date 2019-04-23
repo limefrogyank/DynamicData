@@ -30,10 +30,24 @@ namespace DynamicData.SignalR
             return base.Clone(changeSetString);
         }
 
+        IQueryable<TObject> ChainIncludes(IQueryable<TObject> query)
+        {
+            var includeChain = (List<string>)Context.Items["IncludeChain"];
+            if (includeChain == null)
+                return query;
+            foreach (var includeString in includeChain)
+                query = query.Include(includeString);
+            return query;
+        }
+
         public override Dictionary<TKey, TObject> GetKeyValuePairs()
         {
             var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
-            var data = _dbContext.Set<TObject>().Where((Func<TObject, bool>)Context.Items["WherePredicate"]).ToDictionary((o) => keySelector.Invoke(o));
+
+            IQueryable<TObject> query = _dbContext.Set<TObject>();
+            query = ChainIncludes(query);
+            var data = query.Where((Func<TObject, bool>)Context.Items["WherePredicate"]).ToDictionary((o) => keySelector.Invoke(o));
+            //_dbContext.Set<TObject>().Where((Func<TObject, bool>)Context.Items["WherePredicate"]).ToDictionary((o) => keySelector.Invoke(o));
             return data;
         }
 
@@ -42,8 +56,11 @@ namespace DynamicData.SignalR
             var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
             var deserializer = new ExpressionSerializer(new JsonSerializer());
             var filterExpression = (Expression<Func<TObject, bool>>)deserializer.DeserializeText(predicateFilterString);
+            IQueryable<TObject> query = _dbContext.Set<TObject>();
+            query = ChainIncludes(query);
+            var data = query.Where((Func<TObject, bool>)Context.Items["WherePredicate"]).Where(filterExpression.Compile()).ToDictionary((o) => keySelector.Invoke(o));
 
-            var data = _dbContext.Set<TObject>().Where((Func<TObject, bool>)Context.Items["WherePredicate"]).Where(filterExpression.Compile()).ToDictionary((o) => keySelector.Invoke(o));
+            //var data = _dbContext.Set<TObject>().Where((Func<TObject, bool>)Context.Items["WherePredicate"]).Where(filterExpression.Compile()).ToDictionary((o) => keySelector.Invoke(o));
             return Task.FromResult(data);
         }
 
