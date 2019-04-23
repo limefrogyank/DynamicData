@@ -109,7 +109,7 @@ courseCache = new DynamicData.SignalR.SignalRSourceCache<Course, string>("/Cours
 ```
 courseCache = new DynamicData.SignalR.SignalRSourceCache<Course, string>("/CourseHub", lambda, authService.accessToken);
 ```
-You *can* use the `AsObservableCache()` extension to create a read-only copy, but then you will lose the ability (for now) to `Connect()` with a predicate.  The current overload of using a `Func<TObject,bool>` will **not** work since it needs to be an `Expression` like the sample above.
+You *can* use the `AsObservableCache()` extension to create a read-only copy, but then you will lose the ability (for now) to `Connect()` with a predicate.  The current overload of using a `Func<TObject,bool>` will **not** work since it needs to be an `Expression` like the sample above.  An alternative might be to put the cache behind a service and only expose a custom Connect method.
 
 Since the connection is created asynchronously, to be sure that you are ready to edit the `SignalRSourceCache`, you should use the `AddOrUpdateAsync`, `EditAsync`, etc extensions in `DynamicData.SignalR`.  You *might* be able to get away with the synchronous versions if there is a guaranteed signficant timespan between the cache creation and an edit.
 ```
