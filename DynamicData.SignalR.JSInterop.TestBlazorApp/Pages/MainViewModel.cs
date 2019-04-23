@@ -30,8 +30,24 @@ namespace DynamicData.SignalR.JSInterop.TestBlazorApp.Pages
             firstCache.Connect()
                 .Bind(people)
                 .Subscribe();
+
+          
+
         }
 
-       
+        public Task AddFiveRandom()
+        {
+            var generator = new RandomPersonGenerator();
+            int? result = null;
+            var subscription = firstCache.CountChanged.Subscribe(count => result = count);
+
+            return firstCache.AddOrUpdateAsync(generator.Take(5));
+        }
+
+        public Task ClearAll()
+        {            
+            return firstCache.ClearAsync();
+        }
+
     }
 }

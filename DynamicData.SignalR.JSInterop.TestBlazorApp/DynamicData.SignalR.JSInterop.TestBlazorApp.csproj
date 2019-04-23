@@ -9,6 +9,7 @@
   <!-- Workaround for target dependency order in Microsoft.NET.Sdk.Razor and Microsoft.SourceLink.Common -->
   <Target Name="_EnsureSourceLinkHappensBeforeRazorComponentGeneration" BeforeTargets="PrepareForRazorComponentGenerate" DependsOnTargets="GenerateSourceLinkFile" />
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.0.0-preview4-19216-03" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.0.0-preview4.19216.3" />
   </ItemGroup>
   <ItemGroup>

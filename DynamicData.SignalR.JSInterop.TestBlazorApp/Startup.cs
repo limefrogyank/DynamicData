@@ -35,7 +35,17 @@ namespace DynamicData.SignalR.JSInterop.TestBlazorApp
 
             services.AddRazorPages();
 
-            services.AddServerSideBlazor().AddSignalR().AddNewtonsoftJsonProtocol();
+            services.AddServerSideBlazor().AddSignalR().AddNewtonsoftJsonProtocol(config =>
+            {
+                config.PayloadSerializerSettings.ContractResolver = new DynamicData.SignalR.CustomContractResolver();
+            })
+                //hack to make other hubs work until preview-5 comes out.
+            .AddHubOptions<DynamicData.SignalR.DynamicDataCacheHub<TestModel.Person, string, TestContext>>(config =>
+            {
+                config.SupportedProtocols = new List<string>();
+                config.SupportedProtocols.Add("json");
+            });
+
             services.AddSingleton<WeatherForecastService>();
         }
 

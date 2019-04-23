@@ -6,6 +6,23 @@
 
 @inject IJSRuntime jsRuntime
 
+<button class="btn btn-primary" onclick=@OnAddFiveRandom>Add 5 Random</button>
+<button class="btn btn-primary" onclick=@OnClearAll>Clear All</button>
+
+@if (mainViewModel != null)
+{
+<ul>
+    @foreach (var item in mainViewModel.People)
+    {
+    <li>
+        <div>@item.Name</div>
+        <div>@item.Age</div>
+        <div>@item.Gender</div>
+    </li>
+    }
+</ul>
+}
+
 @functions { 
 
     MainViewModel mainViewModel;
@@ -26,5 +43,15 @@
     private void People_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         StateHasChanged();
+    }
+
+    Task OnAddFiveRandom(UIMouseEventArgs args)
+    {
+        return mainViewModel.AddFiveRandom();
+    }
+
+    Task OnClearAll(UIMouseEventArgs args)
+    {
+        return mainViewModel.ClearAll();
     }
 }
