@@ -1,4 +1,4 @@
-#This branch is for Xamarin.Forms compatibility ONLY
+# This branch is for Xamarin.Forms compatibility ONLY
 The Blazor projects definitely won't work with this.
 
 ## You must use netcore v4 (preview) for this to work! ##
