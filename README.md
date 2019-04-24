@@ -1,3 +1,5 @@
+# This branch is for Xamarin.Forms compatibility ONLY
+
 ## Dynamic Data
 
 Dynamic Data is a portable class library which brings the power of Reactive Extensions (Rx) to collections.  
