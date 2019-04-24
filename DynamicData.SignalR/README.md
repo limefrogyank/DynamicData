@@ -1,3 +1,6 @@
+#This branch is for Xamarin.Forms compatibility ONLY
+The Blazor projects definitely won't work with this.
+
 ## You must use netcore v4 (preview) for this to work! ##
 
 See the sample aspnetcore app for an example of how to setup SignalR and use one of the two generic hubs listed below.  You must be using EntityFrameworkCore and some kind of database (any will do).  The sample uses Sqlite for convenience.
