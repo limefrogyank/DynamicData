@@ -2,6 +2,7 @@
 
 See the sample aspnetcore app for an example of how to setup SignalR and use one of the two generic hubs listed below.  You must be using EntityFrameworkCore and some kind of database (any will do).  The sample uses Sqlite for convenience.
 
+If you want to use this project in Blazor, see https://github.com/limefrogyank/DynamicData/tree/master/DynamicData.SignalR.JSInterop for a version that can communicate using the javascript version of SignalR.  
 
 ## The way SignalR works with DynamicData: ##
 (I'm open to suggestions about all of this)
