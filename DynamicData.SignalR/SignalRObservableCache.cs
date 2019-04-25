@@ -32,14 +32,14 @@ namespace DynamicData.SignalR
                      if (accessToken != null)
                          options.AccessTokenProvider = () => Task.FromResult(accessToken);
                  
-                     options.HttpMessageHandlerFactory = (handler) =>
-                     {
-                         if (handler is HttpClientHandler clientHandler)
-                         {
-                             clientHandler.ServerCertificateCustomValidationCallback = ValidateCertificate;
-                         }
-                         return handler;
-                     };
+                     //options.HttpMessageHandlerFactory = (handler) =>
+                     //{
+                     //    if (handler is HttpClientHandler clientHandler)
+                     //    {
+                     //        clientHandler.ServerCertificateCustomValidationCallback = ValidateCertificate;
+                     //    }
+                     //    return handler;
+                     //};
                  })
                  .Build();
             
