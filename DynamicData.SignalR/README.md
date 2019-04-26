@@ -97,6 +97,26 @@ Context.Items["IncludeChain"] = new List<string>() { "Owner" };
 
 That's it.  You can add multiple string paths to the properties you want to include.
 
+#### Quirks and things to avoid
+
+While you can use child entities in your main entity for each cache, there are going to be problems if you actually try to add a new entity that contains a child entity (like a parent class) that already exists in the database.  Due to the generic nature of the Hub in this repo, there's no way to automatically tell it to update the child entities, rather then try to add them (along with the main one).  If your child entites are `null` when you add them, there's no problem.  But if you need them for some predicate logic, you should override the `AddOrUpdateAsync` method in your subclassed `DynamicDataPredicateHub` and tell EntityFrameworkCore to ignore the child objects.  The foreign keys themselves are fine, just not the objects they link to.
+
+```
+public override Task AddOrUpdateObjects(IEnumerable<AttendanceItem> items)
+{
+    //set child entities to unchanged
+    foreach (var item in items)
+    {
+        if (item.RollCallParent != null)
+            _dbContext.Entry(item.RollCallParent).State = EntityState.Unchanged;
+        if (item.UserParent != null)
+            _dbContext.Entry(item.UserParent).State = EntityState.Unchanged;
+    }
+
+    return base.AddOrUpdateObjects(items);
+}
+```
+
 ## Using the `SignalRSourceCache<TObject,TKey>`
 
 For the most part, this is used very similarly to the standard `SourceCache<TObject,TKey>`.  
