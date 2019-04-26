@@ -164,7 +164,7 @@ namespace DynamicData.SignalR.JSInterop
 
                         _remoteUpdater = new SignalRRemoteUpdater<TObject, TKey>(_jsRuntime, changeAwareCache, _keySelectorExpression);
                         updateAction(_remoteUpdater);
-                        Debug.Assert(_data.Count > 0);
+                        //Debug.Assert(_data.Count > 0);
                         _remoteUpdater = null;
 
                         return changeAwareCache.CaptureChanges();

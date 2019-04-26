@@ -14,6 +14,7 @@ namespace DynamicData.SignalR
         where TContext : DbContext
         where TObject : class
     {
+        
         public  DynamicDataPredicateHub(TContext dbContext) : base(dbContext)
         {
             
@@ -21,7 +22,7 @@ namespace DynamicData.SignalR
 
         public override Task AddOrUpdateObjects(IEnumerable<TObject> items)
         {
-            var justOwned = items.Where((Func<TObject, bool>)Context.Items["WherePredicate"]);
+            var justOwned = items.Where((Func<TObject, bool>)Context.Items["WherePredicate"]).ToList();
             return base.AddOrUpdateObjects(justOwned);
         }
 
@@ -30,15 +31,7 @@ namespace DynamicData.SignalR
             return base.Clone(changeSetString);
         }
 
-        IQueryable<TObject> ChainIncludes(IQueryable<TObject> query)
-        {
-            var includeChain = (List<string>)Context.Items["IncludeChain"];
-            if (includeChain == null)
-                return query;
-            foreach (var includeString in includeChain)
-                query = query.Include(includeString);
-            return query;
-        }
+
 
         public override Dictionary<TKey, TObject> GetKeyValuePairs()
         {

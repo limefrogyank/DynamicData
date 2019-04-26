@@ -40,12 +40,28 @@ namespace DynamicData.SignalR
 
         }
 
+        protected IQueryable<TObject> ChainIncludes(IQueryable<TObject> query)
+        {
+            var includeChain = (List<string>)Context.Items["IncludeChain"];
+            if (includeChain == null)
+                return query;
+            foreach (var includeString in includeChain)
+                query = query.Include(includeString);
+            return query;
+        }
+
+        protected IQueryable<TObject>  StartQuery()
+        {
+            IQueryable<TObject> query = _dbContext.Set<TObject>();
+            query = ChainIncludes(query);
+            return query;
+        }
 
         public virtual Dictionary<TKey, TObject> GetKeyValuePairs()
         {
             var keySelector = (Func<TObject,TKey>)Context.Items["KeySelector"];
-
-            var data = _dbContext.Set<TObject>().ToDictionary((o) => keySelector.Invoke(o));
+            
+            var data = StartQuery().ToDictionary((o) => keySelector.Invoke(o));
             return data;
         }
 
@@ -55,8 +71,8 @@ namespace DynamicData.SignalR
 
             var deserializer = new ExpressionSerializer(new JsonSerializer());
             var filterExpression = (Expression<Func<TObject, bool>>)deserializer.DeserializeText(predicateFilterString);
-
-            var data = _dbContext.Set<TObject>().Where(filterExpression).ToDictionary((o) => keySelector.Invoke(o));
+                        
+            var data = StartQuery().Where(filterExpression).ToDictionary((o) => keySelector.Invoke(o));
             return Task.FromResult(data);
         }
 
@@ -64,31 +80,42 @@ namespace DynamicData.SignalR
 
         public virtual async Task AddOrUpdateObjects(IEnumerable<TObject> items)
         {
-            var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
-            Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
-            
-            foreach (var item in items)
+            try
             {
-                var key = keySelector.Invoke(item);
-                var found = _dbContext.Set<TObject>().Find(key);
-                if (found != null)
+                var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+                Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
+
+                foreach (var item in items)
                 {
-                    existing.Add(key, found);
-                    _dbContext.Entry(found).CurrentValues.SetValues(item);
+                    var key = keySelector.Invoke(item);
+                    var found = _dbContext.Set<TObject>().Find(key);
+                    if (found != null)
+                    {
+                        existing.Add(key, found);
+                        _dbContext.Entry(found).CurrentValues.SetValues(item);
+                    }
+                    else
+                        _dbContext.Add(item);
                 }
-                else
-                    _dbContext.Add(item);
-            }
 
-            var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
-            foreach (var item in items)
+                _dbContext.SaveChanges();
+
+                var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
+                foreach (var item in items)
+                {
+                    var key = keySelector.Invoke(item);
+                    changeAwareCache.AddOrUpdate(item, key);
+                }
+
+         
+                
+                await SendChangesToOthersAsync(changeAwareCache);
+
+            }
+            catch 
             {
-                var key = keySelector.Invoke(item);
-                changeAwareCache.AddOrUpdate(item, key);
+                var f = 3;
             }
-
-            _dbContext.SaveChanges();
-            await SendChangesToOthersAsync(changeAwareCache);
         }
 
         //public virtual async Task AddOrUpdateObject(TObject item)

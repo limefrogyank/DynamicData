@@ -4,6 +4,10 @@ See the sample aspnetcore app for an example of how to setup SignalR and use one
 
 If you want to use this project in Blazor, see https://github.com/limefrogyank/DynamicData/tree/master/DynamicData.SignalR.JSInterop for a version that can communicate using the javascript version of SignalR.  
 
+## Demo (using Blazor)
+
+https://dynamicdatasignalrjsinteroptest.azurewebsites.net/
+
 ## The way SignalR works with DynamicData: ##
 (I'm open to suggestions about all of this)
 

@@ -27,6 +27,7 @@ namespace DynamicData.SignalR
             :base(baseUrl, keySelectorExpression)
         {            
             _connection = new HubConnectionBuilder()
+                 .AddNewtonsoftJsonProtocol()
                  .WithUrl($"{_baseUrl}", options =>
                  {
                      if (accessToken != null)
