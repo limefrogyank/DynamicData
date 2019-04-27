@@ -15,15 +15,18 @@ namespace DynamicData.SignalR.JSInterop
     public class SignalRRemoteUpdater<TObject, TKey> : SignalRRemoteUpdaterBase<TObject, TKey>
     {
         private readonly IJSRuntime _jsRuntime;
+        private readonly string _connectionKey;
+
         //private readonly ICache<TObject, TKey> _cache;
         //private readonly Expression<Func<TObject, TKey>> _keySelectorExpression;
         //private readonly Func<TObject, TKey> _keySelector;
         //private readonly string _selectorString;
 
-        public SignalRRemoteUpdater(IJSRuntime jsRuntime, ICache<TObject, TKey> cache, Expression<Func<TObject, TKey>> keySelectorExpression = null)
+        public SignalRRemoteUpdater(IJSRuntime jsRuntime, string connectionKey, ICache<TObject, TKey> cache, Expression<Func<TObject, TKey>> keySelectorExpression = null)
             : base(cache, keySelectorExpression)
         {
             _jsRuntime = jsRuntime;
+            _connectionKey = connectionKey;
             //_cache = cache ?? throw new ArgumentNullException(nameof(cache));
             //_keySelectorExpression = keySelectorExpression;
 
@@ -32,10 +35,11 @@ namespace DynamicData.SignalR.JSInterop
             //_selectorString = serializer.SerializeText(_keySelectorExpression);  //string version for serialization on SignalR
         }
 
-        public SignalRRemoteUpdater(IJSRuntime jsRuntime, Dictionary<TKey, TObject> data, Expression<Func<TObject, TKey>> keySelectorExpression = null)
+        public SignalRRemoteUpdater(IJSRuntime jsRuntime, string connectionKey, Dictionary<TKey, TObject> data, Expression<Func<TObject, TKey>> keySelectorExpression = null)
             : base(data, keySelectorExpression)
         {
             _jsRuntime = jsRuntime;
+            _connectionKey = connectionKey;
             //if (data == null) throw new ArgumentNullException(nameof(data));
             //_cache = new Cache<TObject, TKey>(data);
             //_keySelectorExpression = keySelectorExpression;
@@ -47,13 +51,13 @@ namespace DynamicData.SignalR.JSInterop
         public override void AddOrUpdate(IEnumerable<TObject> items)
         {
             base.AddOrUpdate(items);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "AddOrUpdateObjects", items);
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", _connectionKey, "AddOrUpdateObjects", items);
         }
 
         public override void AddOrUpdate(TObject item)
         {
             base.AddOrUpdate(item);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "AddOrUpdateObjects", new[] { item });
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", _connectionKey, "AddOrUpdateObjects", new[] { item });
         }
 
         public override void AddOrUpdate(TObject item, IEqualityComparer<TObject> comparer)
@@ -62,21 +66,21 @@ namespace DynamicData.SignalR.JSInterop
         }
 
         public override void AddOrUpdate(IEnumerable<KeyValuePair<TKey, TObject>> keyValuePairs)
-        {
+        { 
             base.AddOrUpdate(keyValuePairs);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "AddOrUpdateObjects", keyValuePairs.Select(x=>x.Value));
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", _connectionKey, "AddOrUpdateObjects", keyValuePairs.Select(x=>x.Value));
         }
 
         public override void AddOrUpdate(KeyValuePair<TKey, TObject> item)
         {
             base.AddOrUpdate(item);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "AddOrUpdateObjects", new[] { item.Value });
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", _connectionKey, "AddOrUpdateObjects", new[] { item.Value });
         }
 
         public override void AddOrUpdate(TObject item, TKey key)
         {
             base.AddOrUpdate(item, key);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "AddOrUpdateObjects", new[] { item });
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", _connectionKey, "AddOrUpdateObjects", new[] { item });
         }
 
 
@@ -84,7 +88,7 @@ namespace DynamicData.SignalR.JSInterop
         {
             var items = _cache.Items.ToList();
             base.Clear();
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "RemoveItems", items);
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", _connectionKey, "RemoveItems", items);
         }
 
 
@@ -92,7 +96,7 @@ namespace DynamicData.SignalR.JSInterop
         {
             base.Clone(changes);
             var changesString = Newtonsoft.Json.JsonConvert.SerializeObject(changes, new ChangeSetConverter<TObject, TKey>());
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "Clone", changesString);
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", _connectionKey, "Clone", changesString);
         }
 
 

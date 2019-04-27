@@ -40,6 +40,8 @@ namespace DynamicData.SignalR
         private readonly string _accessToken;
 
         private SignalRReaderWriter<TObject, TKey> backupReference;
+        private string _connectionKey;
+
         //private readonly string _baseUrl;
         //private readonly Expression<Func<TObject, TKey>> _keySelectorExpression;
         //private Task initializationTask;
@@ -49,27 +51,8 @@ namespace DynamicData.SignalR
         {
             _jsRuntime = jsRuntime;
             _accessToken = accessToken;
-
-
-            backupReference = new SignalRReaderWriter<TObject, TKey>(_jsRuntime, keySelectorExpression);
-            _readerWriter = backupReference;
-
-            var changeSubscription = _readerWriter.Changes.Subscribe((changeSet) =>
-            {
-                _changes.OnNext(changeSet);
-            });
-
-            _cleanUp = Disposable.Create(() =>
-            {
-                changeSubscription.Dispose();
-                _changes.OnCompleted();
-                _changesPreview.OnCompleted();
-                if (_countChanged.IsValueCreated)
-                {
-                    _countChanged.Value.OnCompleted();
-                }
-            });
-
+                        
+            
             initializationTask = InitializeSignalR();
         }
 
@@ -79,19 +62,47 @@ namespace DynamicData.SignalR
             {
                 try
                 {
-                    var result = await _jsRuntime.InvokeAsync<bool>("dynamicDataSignalR.createHubConnection", _baseUrl, _accessToken);
+                    _connectionKey = await _jsRuntime.InvokeAsync<string>(
+                        "dynamicDataSignalR.createHubConnection",
+                        _baseUrl, 
+                        _accessToken);
+
+                    _readerWriter = new SignalRReaderWriter<TObject, TKey>(_jsRuntime, _connectionKey, _keySelectorExpression);
+                    //_readerWriter = backupReference;
+
+                    var changeSubscription = _readerWriter.Changes.Subscribe((changeSet) =>
+                    {
+                        _changes.OnNext(changeSet);
+                    });
+
+                    _cleanUp = Disposable.Create(() =>
+                    {
+                        changeSubscription.Dispose();
+                        _changes.OnCompleted();
+                        _changesPreview.OnCompleted();
+                        if (_countChanged.IsValueCreated)
+                        {
+                            _countChanged.Value.OnCompleted();
+                        }
+                    });
+
 
                     //Need the InvokeHelper because Blazor can't invoke .NET from JS if the instances are generic classes.
                     var changeInvokeHelper = new ChangeInvokeHelper();
-                    backupReference.InitializeHelper(changeInvokeHelper);
+                    ((SignalRReaderWriter<TObject,TKey>)_readerWriter).InitializeHelper(changeInvokeHelper);
                     await _jsRuntime.InvokeAsync<object>(
-                        "dynamicDataSignalR.connect",
+                       "dynamicDataSignalR.connect",
+                         _connectionKey,
                         new DotNetObjectRef(changeInvokeHelper));
 
                     var serializer = new ExpressionSerializer(new JsonSerializer());
                     var expressionString = serializer.SerializeText(_keySelectorExpression);
 
-                    await _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "Initialize", expressionString);
+                    await _jsRuntime.InvokeAsync<object>(
+                        "dynamicDataSignalR.invoke",
+                         _connectionKey,
+                        "Initialize", 
+                        expressionString);
                                        
                     Debug.WriteLine("Connection initialized");
                 }
@@ -213,7 +224,7 @@ namespace DynamicData.SignalR
 
             return Observable.Defer<IChangeSet<TObject,TKey>>(async () =>
             {
-               
+                await initializationTask;
                var task = GetInitialUpdatesAsync(null);
 
                 return _changes;
@@ -222,9 +233,9 @@ namespace DynamicData.SignalR
 
         public override IObservable<IChangeSet<TObject, TKey>> Connect(Expression<Func<TObject, bool>> predicateExpression = null)
         {
-
             return Observable.Defer(async () =>
             {
+                await initializationTask;
                 var result = await _slocker.LockAsync(async () =>
                 {
                     var initial =  await GetInitialUpdatesAsync(predicateExpression);

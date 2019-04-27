@@ -81,14 +81,14 @@ namespace DynamicData.SignalR
             return base.RemoveItems(ownedItems);
         }
 
-        public override Task RemoveKeys(IEnumerable<TKey> keys)
+        public override async Task RemoveKeys(IEnumerable<TKey> keys)
         {
             var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
             Dictionary<TObject, TKey> existing = new Dictionary<TObject, TKey>();
 
             foreach (var key in keys)
             {
-                var found = _dbContext.Set<TObject>().Find(key);
+                var found = await _dbContext.Set<TObject>().FindAsync(key);
                 if (found != null)
                 {
                     existing.Add(found, key);
@@ -96,7 +96,7 @@ namespace DynamicData.SignalR
             }
             var ownedObjects = existing.Select(x => x.Key).Where((Func<TObject, bool>)Context.Items["WherePredicate"]).ToDictionary((x) => keySelector(x));
 
-            return base.RemoveKeys(existing.Select(x => x.Value));
+            await base.RemoveKeys(existing.Select(x => x.Value));
         }
                
         protected override Task SendChangesToOthersAsync(ChangeAwareCache<TObject, TKey> changeAwareCache)

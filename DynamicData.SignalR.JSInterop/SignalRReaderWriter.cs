@@ -28,6 +28,7 @@ namespace DynamicData.SignalR.JSInterop
 
         //private Subject<ChangeSet<TObject, TKey>> _onChanges;
         private readonly IJSRuntime _jsRuntime;
+        private readonly string _connectionKey;
 
         //public IObservable<ChangeSet<TObject, TKey>> Changes => _onChanges.AsObservable();
 
@@ -38,13 +39,14 @@ namespace DynamicData.SignalR.JSInterop
         //private readonly SemaphoreLocker _slocker = new SemaphoreLocker();
         ////private readonly object _locker = new object();
 
-        public SignalRReaderWriter(IJSRuntime jsRuntime, Expression<Func<TObject, TKey>> keySelectorExpression = null)
+        public SignalRReaderWriter(IJSRuntime jsRuntime, string connectionKey, Expression<Func<TObject, TKey>> keySelectorExpression = null)
             : base(keySelectorExpression)
         {
             //_keySelectorExpression = keySelectorExpression;
             //_onChanges = new Subject<ChangeSet<TObject, TKey>>();
 
             _jsRuntime = jsRuntime;
+            _connectionKey = connectionKey;
 
             //_keySelector = _keySelectorExpression.Compile();
         }
@@ -143,7 +145,7 @@ namespace DynamicData.SignalR.JSInterop
                     var copy = new Dictionary<TKey, TObject>(_data);
                     var changeAwareCache = new ChangeAwareCache<TObject, TKey>(_data);
 
-                    _remoteUpdater = new SignalRRemoteUpdater<TObject, TKey>(_jsRuntime, changeAwareCache, _keySelectorExpression);
+                    _remoteUpdater = new SignalRRemoteUpdater<TObject, TKey>(_jsRuntime, _connectionKey, changeAwareCache, _keySelectorExpression);
                     updateAction(_remoteUpdater);
 
                     _remoteUpdater = null;
@@ -162,7 +164,7 @@ namespace DynamicData.SignalR.JSInterop
                     {
                         var changeAwareCache = new ChangeAwareCache<TObject, TKey>(_data);
 
-                        _remoteUpdater = new SignalRRemoteUpdater<TObject, TKey>(_jsRuntime, changeAwareCache, _keySelectorExpression);
+                        _remoteUpdater = new SignalRRemoteUpdater<TObject, TKey>(_jsRuntime, _connectionKey, changeAwareCache, _keySelectorExpression);
                         updateAction(_remoteUpdater);
                         //Debug.Assert(_data.Count > 0);
                         _remoteUpdater = null;
@@ -171,7 +173,7 @@ namespace DynamicData.SignalR.JSInterop
                     }
                     else
                     {
-                        _remoteUpdater = new SignalRRemoteUpdater<TObject, TKey>(_jsRuntime, _data, _keySelectorExpression);
+                        _remoteUpdater = new SignalRRemoteUpdater<TObject, TKey>(_jsRuntime, _connectionKey, _data, _keySelectorExpression);
                         updateAction(_remoteUpdater);
                         _remoteUpdater = null;
 
@@ -204,14 +206,14 @@ namespace DynamicData.SignalR.JSInterop
                 Func<TObject, bool> filter = null;
 
                 if (filterExpression == null)
-                    _data = await _jsRuntime.InvokeAsync<Dictionary<TKey, TObject>>("dynamicDataSignalR.invoke", "GetKeyValuePairs");
+                    _data = await _jsRuntime.InvokeAsync<Dictionary<TKey, TObject>>("dynamicDataSignalR.invoke", _connectionKey, "GetKeyValuePairs");
                 //_data = await _connection.InvokeAsync<Dictionary<TKey, TObject>>("GetKeyValuePairs");
                 else
                 {
                     filter = filterExpression.Compile();
                     var serializer = new ExpressionSerializer(new JsonSerializer());
                     var expressionString = serializer.SerializeText(filterExpression);
-                    _data = await _jsRuntime.InvokeAsync<Dictionary<TKey, TObject>>("dynamicDataSignalR.invoke", "GetKeyValuePairsFiltered", expressionString);
+                    _data = await _jsRuntime.InvokeAsync<Dictionary<TKey, TObject>>("dynamicDataSignalR.invoke", _connectionKey, "GetKeyValuePairsFiltered", expressionString);
                     //_data = await _connection.InvokeAsync<Dictionary<TKey, TObject>>("GetKeyValuePairsFiltered", expressionString);
                 }
 
