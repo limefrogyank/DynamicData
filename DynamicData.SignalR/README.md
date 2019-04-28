@@ -130,7 +130,7 @@ public class OtherHub: Hub
 {
 	private readonly IHubContext<MainHub> _mainHubContext;
 
-	public AttendanceHub(IHubContext<MainHub> mainHubContext)
+	public OtherHub(IHubContext<MainHub> mainHubContext)
 	{
 		_mainHubContext = mainHubContext;            
 	}
