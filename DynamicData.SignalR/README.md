@@ -149,9 +149,9 @@ public async Task DoSomeChangeToTheDatabase()
 
 	// notify all clients that monitor the records using SignalRSourceCache
 	 _mainHubContext.ItemsAddedExternallyGroupOverride<MainHub,MainModel,string,DatabaseContext>(
-        new List<MainModel>() { addedModel }, 
-        keySelector, 
-        model.OwnerId  //this can be any string, but usually same as "GroupIdentifier" from normally initializing a hub connection
+            new List<MainModel>() { addedModel }, 
+            keySelector, 
+            addedModel.OwnerId  //this can be any string, but usually same as "GroupIdentifier" from normally initializing a hub connection
         );
 }
 ```
