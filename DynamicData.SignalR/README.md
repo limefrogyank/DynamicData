@@ -121,6 +121,41 @@ public override Task AddOrUpdateObjects(IEnumerable<AttendanceItem> items)
 }
 ```
 
+### External updates to your database
+
+If an external change is made to your database, how will `SignalRDynamicDataCache` know that a change has happened?  These updates can be from a different hub or even a controller.  You'll need to call a hub context extension method to notify all connected clients.  First, inject a reference to the `HubContext` you actually want to notify into whatever class is doing the external change to the database.
+
+```
+public class OtherHub: Hub
+{
+	private readonly IHubContext<MainHub> _mainHubContext;
+
+	public AttendanceHub(IHubContext<MainHub> mainHubContext)
+	{
+		_mainHubContext = mainHubContext;            
+	}
+}
+```
+Then, you can simply call the `HubContext` extension method along with a group identifier (which clients should be receiving the notification).  Currently, only an extension to *add* items has been implemented, `ItemsAddedExternallyGroupOverride`.
+```
+// In the same class as before
+public async Task DoSomeChangeToTheDatabase()
+{
+	// methods that add database records here...
+	var addedModel = // this is the model that was just added to the database
+
+	// need to add in your own keySelector (we just created this context.  It is not initialized like in a normal scenario)
+	var keySelector = (Func<MainModel, string>)((item) => item.Id);
+
+	// notify all clients that monitor the records using SignalRSourceCache
+	 _mainHubContext.ItemsAddedExternallyGroupOverride<MainHub,MainModel,string,DatabaseContext>(
+        new List<MainModel>() { addedModel }, 
+        keySelector, 
+        model.OwnerId  //this can be any string, but usually same as "GroupIdentifier" from normally initializing a hub connection
+        );
+}
+```
+
 ## Using the `SignalRSourceCache<TObject,TKey>`
 
 For the most part, this is used very similarly to the standard `SourceCache<TObject,TKey>`.  
