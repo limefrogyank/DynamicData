@@ -115,7 +115,7 @@ namespace DynamicData.SignalR
             return task;
         }
 
-      
+
         //internal async void UpdateFromSource(Action<ISourceUpdater<TObject, TKey>> updateAction)
         //{
         //    if (initializationTask!= null)
@@ -184,7 +184,7 @@ namespace DynamicData.SignalR
         //        //{
         //        if (changes.Count != 0)
         //            _changesPreview.OnNext(changes);
-                
+
         //        //}
         //    });
         //}
@@ -222,20 +222,22 @@ namespace DynamicData.SignalR
         {
             if (predicate != null) throw new Exception("For ApiSourceCache, you can't have predicates in the connect method.  Use Expression<Func<TObject,bool>> overload instead.");
 
-            return Observable.Defer<IChangeSet<TObject,TKey>>(async () =>
-            {
-                await initializationTask;
-               var task = GetInitialUpdatesAsync(null);
+            return Observable.Defer<IChangeSet<TObject, TKey>>(async () =>
+             {
+                 if (initializationTask != null)
+                     await initializationTask;
+                 var task = GetInitialUpdatesAsync(null);
 
-                return _changes;
-            });
+                 return _changes;
+             });
         }
 
         public override IObservable<IChangeSet<TObject, TKey>> Connect(Expression<Func<TObject, bool>> predicateExpression = null)
         {
             return Observable.Defer(async () =>
             {
-                await initializationTask;
+                if (initializationTask != null)
+                    await initializationTask;
                 var result = await _slocker.LockAsync(async () =>
                 {
                     var initial =  await GetInitialUpdatesAsync(predicateExpression);

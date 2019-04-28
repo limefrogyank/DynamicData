@@ -118,6 +118,7 @@ namespace DynamicData.SignalR
 
         protected async Task<ChangeSet<TObject, TKey>> GetInitialUpdatesAsync(Expression<Func<TObject, bool>> filterExpression = null)
         {
+            if (initializationTask != null)
             await initializationTask;
             return await _readerWriter.GetInitialUpdates(filterExpression);
         }

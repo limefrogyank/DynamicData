@@ -14,10 +14,10 @@ namespace DynamicData.SignalR
         where TContext : DbContext
         where TObject : class
     {
-        
-        public  DynamicDataPredicateHub(TContext dbContext) : base(dbContext)
+
+        public DynamicDataPredicateHub(TContext dbContext) : base(dbContext)
         {
-            
+
         }
 
         public override Task AddOrUpdateObjects(IEnumerable<TObject> items)
@@ -70,9 +70,9 @@ namespace DynamicData.SignalR
                     existing.Add(found, key);
                 }
             }
-            var ownedObjects = existing.Select(x => x.Key).Where((Func<TObject, bool>)Context.Items["WherePredicate"]).ToDictionary((x)=>keySelector(x));
+            var ownedObjects = existing.Select(x => x.Key).Where((Func<TObject, bool>)Context.Items["WherePredicate"]).ToDictionary((x) => keySelector(x));
 
-            return base.RefreshKeys(existing.Select(x=>x.Value));
+            return base.RefreshKeys(existing.Select(x => x.Value));
         }
 
         public override Task RemoveItems(IEnumerable<TObject> items)
@@ -98,18 +98,13 @@ namespace DynamicData.SignalR
 
             await base.RemoveKeys(existing.Select(x => x.Value));
         }
-               
+
         protected override Task SendChangesToOthersAsync(ChangeAwareCache<TObject, TKey> changeAwareCache)
         {
             var changes = changeAwareCache.CaptureChanges();
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(changes, new ChangeSetConverter<TObject, TKey>());
-            return Clients.OthersInGroup((string)Context.Items["GroupIdentifier"]).SendAsync("Changes", json);
+            return Clients.OthersInGroup((string)Context.Items["GroupIdentifier"]).Changes(json);
         }
-
-        //protected Task AddToGroupAsync(string identifier)
-        //{
-        //    return Groups.AddToGroupAsync(Context.ConnectionId, identifier);
-        //}
 
         public override async Task OnConnectedAsync()
         {
@@ -122,5 +117,8 @@ namespace DynamicData.SignalR
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, (string)Context.Items["GroupIdentifier"]);
             await base.OnDisconnectedAsync(exception);
         }
+
+       
+
     }
 }
