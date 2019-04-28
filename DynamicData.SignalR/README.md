@@ -13,7 +13,7 @@ https://dynamicdatasignalrjsinteroptest.azurewebsites.net/
 
 1.  DynamicData will cache the data that already exists on the server.  You can use a predicate to limit what is initially pulled down.  Or you can use server-side logic to limit access by user (see authentication).
 2.  Once your cache is established, any filters you apply will work on your cached data.
-3.  When you make an edit to your `SignalRSourceCache`, that change is propagated through every connection on SignalR.  If you are using 'DynamicDataPredicateHub`, you can taylor who gets those messages.
+3.  When you make an edit to your `SignalRSourceCache`, that change is propagated through every connection on SignalR.  If you are using 'DynamicDataPredicateHub`, you can tailor who gets those messages.
 4.  Initialization of SignalR is an asynchronous process... therefore I had to put some async code into DynamicData.SignalR.  You should use `EditAsync` and the other corresponding actions (i.e. `AddOrUpdateAsync`, etc).  The extensions are not all implemented yet.
 5.  `Clear` or `ClearAsync` will WIPE OUT YOUR SERVER DATA!  However, it will only wipe out the data that was cached on your `SignalRSourceCache`.  If you use a predicate to `Connect` and limit the inital dataset that you cache, when you use `Clear`, it will only wipe out that data set.  
 6.  You can't use `Func<TObject,string>` for a key selector!  This is because you can't serialize it.  You must write an `Expression` that can be serialized.  It will be compiled into a `Func<TObject,string>` later.  
