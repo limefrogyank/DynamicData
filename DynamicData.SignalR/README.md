@@ -76,6 +76,17 @@ public class CourseHub : DynamicData.SignalR.DynamicDataPredicateHub<Course, str
         }
     }
 ```
+
+#### Optional
+`Context.Items["GroupPredicates"]` -> While `GroupIdentifier` is used to define the default "group" to send all change messages to, you may want to define other groups that need to see those changes.  `GroupPredicates` is a `List<Func<TObject,string>>` that you can use to define more groups to send the changes messages *related to those items only*.  
+
+For example, you have a list of `File` that all are owned by the respective users who submitted each `File`.  However, each `File` also belongs to a specific `Folder` and that `Folder` is owned by a single person.  This would happen in a dropbox type network share folder.  When a user makes a change to the `File`, you need the owner of the `Folder` to also receive change notifications.  Therefore, you would setup `GroupPredicates` in your custom hub like this:
+
+```
+Context.Items["GroupPredicates"] = new List<Func<File, string>>() { (item)=> item.FolderParent.OwnerId };
+```
+
+
 ### Customizing EntityFrameworkCore query even further
 If you want to `Include` foreign key relationships into your regular class, you can do that by subclassing either of the two hubs above and adding some string array parameters to the `Context.Items` dictionary under the key `IncludeChain`.
 
