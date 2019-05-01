@@ -88,7 +88,7 @@ Context.Items["GroupPredicates"] = new List<Func<File, string>>() { (item)=> ite
 
 
 ### Customizing EntityFrameworkCore query even further
-If you want to `Include` foreign key relationships into your regular class, you can do that by subclassing either of the two hubs above and adding some string array parameters to the `Context.Items` dictionary under the key `IncludeChain`.
+If you want to `Include` foreign key relationships into your regular class, you can do that by subclassing either of the two hubs above and adding some strings to the `IncludeChain` `List<string>` in the constructor of the Hub.
 
 For example, if your `DbContext` would be setup like this, where there is a one-to-many relationship between `Owner` and `Course` (i.e. one owner can have many courses):
 
@@ -104,13 +104,13 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
     base.OnModelCreating(modelBuilder); 
 }
 ```
-To get EntityFrameworkCore to actually include the `Owner` model in your `Course` query, you have to specifically add `.Include(course=>course.Owner)`.  Instead of rewriting the `DynamicDataHub`, just override `OnConnectedAsync` and add this:
+To get EntityFrameworkCore to actually include the `Owner` model in your `Course` query, you have to specifically add `.Include(course=>course.Owner)`.  Instead of rewriting the `DynamicDataHub`, just and add this to the constructor:
 
 ```
-Context.Items["IncludeChain"] = new List<string>() { "Owner" };
+IncludeChain.Add("Owner");
 ```
 
-That's it.  You can add multiple string paths to the properties you want to include.
+That's it.  You can add multiple string paths to the properties you want to include.  You **must** add it to the constructor because the state will not be preserved between method calls... the Hub will be re-constructed each time.  The decision to use class variables here rather than `Context.Items` was because anything added to `Context.Items` becomes part of the data passed back and forth from client to server in SignalR.  We want to minimize the bandwidth used.
 
 #### Quirks and things to avoid
 
