@@ -16,6 +16,8 @@ namespace DynamicData.SignalR
     {
         protected readonly TContext _dbContext;
 
+        protected List<string> IncludeChain { get; set; } = new List<string>();
+
         public DynamicDataCacheHub(TContext dbContext)
         {
             _dbContext = dbContext;
@@ -41,10 +43,10 @@ namespace DynamicData.SignalR
 
         protected IQueryable<TObject> ChainIncludes(IQueryable<TObject> query)
         {
-            var includeChain = (List<string>)Context.Items["IncludeChain"];
-            if (includeChain == null)
-                return query;
-            foreach (var includeString in includeChain)
+            //var includeChain = (List<string>)Context.Items["IncludeChain"];
+            //if (includeChain == null)
+            //    return query;
+            foreach (var includeString in IncludeChain)
                 query = query.Include(includeString);
             return query;
         }

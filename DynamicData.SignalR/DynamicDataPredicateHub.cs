@@ -14,7 +14,6 @@ namespace DynamicData.SignalR
         where TContext : DbContext
         where TObject : class
     {
-
         public DynamicDataPredicateHub(TContext dbContext) : base(dbContext)
         {
 
@@ -101,20 +100,41 @@ namespace DynamicData.SignalR
 
         protected override Task SendChangesToOthersAsync(ChangeAwareCache<TObject, TKey> changeAwareCache)
         {
+            //var groupIdentifier = (string)Context.Items["GroupIdentifier"];
+            var groupPredicates = (List<Func<TObject, string>>)Context.Items["GroupPredicates"];
+
+            List<Task> tasks = new List<Task>();
             var changes = changeAwareCache.CaptureChanges();
+
+            // send to current group
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(changes, new ChangeSetConverter<TObject, TKey>());
-            return Clients.OthersInGroup((string)Context.Items["GroupIdentifier"]).Changes(json);
+            tasks.Add(Clients.OthersInGroup((string)Context.Items["GroupIdentifier"]).Changes(json));
+
+            // send to other groups if defined
+            if (groupPredicates != null)
+            {
+                foreach (var group in groupPredicates)
+                {
+                    var groupedByIdentifier = changes.GroupBy(x => group.Invoke(x.Current));
+                    foreach (var subGroup in groupedByIdentifier)
+                    {
+                        json = Newtonsoft.Json.JsonConvert.SerializeObject(subGroup, new ChangeSetConverter<TObject, TKey>());
+                        tasks.Add(Clients.OthersInGroup(subGroup.Key).Changes(json));
+                    }
+                }
+            }
+            return Task.WhenAll(tasks);
         }
 
         public override async Task OnConnectedAsync()
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, (string)Context.Items["GroupIdentifier"]);
+            await Groups.AddToGroupAsync(Context.ConnectionId, (string)Context.Items["GroupIdentifier"]);//(string)Context.Items["GroupIdentifier"]);
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, (string)Context.Items["GroupIdentifier"]);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, (string)Context.Items["GroupIdentifier"]);//(string)Context.Items["GroupIdentifier"]);
             await base.OnDisconnectedAsync(exception);
         }
 
