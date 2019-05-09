@@ -226,9 +226,15 @@ namespace DynamicData.SignalR
              {
                  if (initializationTask != null)
                      await initializationTask;
-                 var task = GetInitialUpdatesAsync(null);
+                 var result = await _slocker.LockAsync(async () =>
+                 {
+                     var initial= await GetInitialUpdatesAsync(null);
 
-                 return _changes;
+                     var changes = Observable.Return(initial).Concat(_changes);
+
+                     return changes;
+                 });
+                 return result;
              });
         }
 

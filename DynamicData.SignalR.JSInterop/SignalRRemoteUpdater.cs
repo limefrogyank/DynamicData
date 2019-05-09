@@ -108,25 +108,25 @@ namespace DynamicData.SignalR.JSInterop
         {
             base.Refresh(item);
             var key = _keySelector(item);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "RefreshKeys", new List<TKey>() { key });
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", _connectionKey, "RefreshKeys", new List<TKey>() { key });
         }
 
         public override void Refresh()
         {
             base.Refresh();
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "RefreshKeys", _cache.Keys.ToList());
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", _connectionKey, "RefreshKeys", _cache.Keys.ToList());
         }
 
         public override void Refresh(IEnumerable<TKey> keys)
         {
             base.Refresh(keys);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "RefreshKeys", keys);
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", _connectionKey, "RefreshKeys", keys);
         }
 
         public override void Refresh(TKey key)
         {
             base.Refresh(key);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "RefreshKeys", new List<TKey>() { key });
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", _connectionKey, "RefreshKeys", new List<TKey>() { key });
         }
 
 
@@ -135,19 +135,19 @@ namespace DynamicData.SignalR.JSInterop
         public override void Remove(TObject item)
         {
             base.Remove(item);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "RemvoeItems", new[] { item });
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", _connectionKey, "RemoveItems", new[] { item });
         }
 
         public override void Remove(TKey key)
         {
             base.Remove(key);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "RemoveKeys", new[] { key });
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", _connectionKey, "RemoveKeys", new[] { key });
         }
 
         public override void Remove(KeyValuePair<TKey, TObject> item)
         {
             base.Remove(item);
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "RemoveKeys", new[] { item.Key });
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", _connectionKey, "RemoveKeys", new[] { item.Key });
         }
 
 
@@ -155,7 +155,7 @@ namespace DynamicData.SignalR.JSInterop
         {
             base.Update(changes);
             var changesString = Newtonsoft.Json.JsonConvert.SerializeObject(changes, new ChangeSetConverter<TObject, TKey>());
-            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", "Clone", changesString);
+            _jsRuntime.InvokeAsync<object>("dynamicDataSignalR.invoke", _connectionKey, "Clone", changesString);
         }
     }
 }
