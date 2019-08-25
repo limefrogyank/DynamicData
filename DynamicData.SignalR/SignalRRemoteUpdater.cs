@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Text;
 using DynamicData.Cache.Internal;
 using DynamicData.Kernel;
+using DynamicData.SignalR.Core;
 using Microsoft.AspNetCore.SignalR.Client;
 using Serialize.Linq.Serializers;
 

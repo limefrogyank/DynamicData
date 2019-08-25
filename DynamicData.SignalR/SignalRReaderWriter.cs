@@ -1,5 +1,6 @@
 ﻿using DynamicData.Cache.Internal;
 using DynamicData.Kernel;
+using DynamicData.SignalR.Core;
 using Microsoft.AspNetCore.SignalR.Client;
 using Serialize.Linq.Serializers;
 using System;
@@ -146,7 +147,7 @@ namespace DynamicData.SignalR
                     if (filter == null || filter(kvp.Value))
                         changes.Add(new Change<TObject, TKey>(ChangeReason.Add, kvp.Key, kvp.Value));
                 }
-                var converter = new DynamicData.SignalR.ChangeSetConverter<TObject, TKey>();
+                var converter = new ChangeSetConverter<TObject, TKey>();
                 var test = Newtonsoft.Json.JsonConvert.SerializeObject(changes, converter);
                 Debug.WriteLine(test);
                 return changes;

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace DynamicData.SignalR
+namespace DynamicData.SignalR.Core
 {
-    public interface ISignalRObservableCache<TObject,TKey> : IObservableCache<TObject, TKey>
+    public interface ISignalRObservableCache<TObject, TKey> : IObservableCache<TObject, TKey>
     {
         IObservable<IChangeSet<TObject, TKey>> Connect(Expression<Func<TObject, bool>> predicateExpression = null);
     }

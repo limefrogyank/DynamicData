@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using DynamicData.Kernel;
+using DynamicData.SignalR.Core;
 
 namespace DynamicData.SignalR
 {

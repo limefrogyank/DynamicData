@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DynamicData.SignalR
+namespace DynamicData.SignalR.Core
 {
     public class SemaphoreLocker
     {
@@ -23,11 +23,11 @@ namespace DynamicData.SignalR
                 _semaphore.Release();
             }
         }
-               
+
 
         public T Lock<T>(Func<T> worker)
         {
-            T result = default(T);
+            T result = default;
             _semaphore.Wait();
             try
             {
@@ -57,7 +57,7 @@ namespace DynamicData.SignalR
         {
             await _semaphore.WaitAsync();
 
-            T result = default(T);
+            T result = default;
             try
             {
                 result = await worker();
@@ -82,7 +82,7 @@ namespace DynamicData.SignalR
         //    finally
         //    {
         //        _semaphore.Release();
-                
+
         //    }
         //    return result;
         //}

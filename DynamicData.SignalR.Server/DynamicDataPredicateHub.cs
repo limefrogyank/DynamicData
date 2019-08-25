@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using DynamicData.SignalR.Core;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Serialize.Linq.Serializers;
 using System;
@@ -8,7 +9,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DynamicData.SignalR
+namespace DynamicData.SignalR.Server
 {
     public abstract class DynamicDataPredicateHub<TObject, TKey, TContext> : DynamicDataCacheHub<TObject, TKey, TContext>
         where TContext : DbContext
@@ -45,15 +46,22 @@ namespace DynamicData.SignalR
 
         public override Task<Dictionary<TKey, TObject>> GetKeyValuePairsFiltered(string predicateFilterString)
         {
-            var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
-            var deserializer = new ExpressionSerializer(new JsonSerializer());
-            var filterExpression = (Expression<Func<TObject, bool>>)deserializer.DeserializeText(predicateFilterString);
-            IQueryable<TObject> query = _dbContext.Set<TObject>();
-            query = ChainIncludes(query);
-            var data = query.Where((Func<TObject, bool>)Context.Items["WherePredicate"]).Where(filterExpression.Compile()).ToDictionary((o) => keySelector.Invoke(o));
+            try
+            {
+                var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+                var deserializer = new ExpressionSerializer(new JsonSerializer());
+                var filterExpression = (Expression<Func<TObject, bool>>)deserializer.DeserializeText(predicateFilterString);
+                IQueryable<TObject> query = _dbContext.Set<TObject>();
+                query = ChainIncludes(query);
+                var data = query.Where((Func<TObject, bool>)Context.Items["WherePredicate"]).Where(filterExpression.Compile()).ToDictionary((o) => keySelector.Invoke(o));
 
-            //var data = _dbContext.Set<TObject>().Where((Func<TObject, bool>)Context.Items["WherePredicate"]).Where(filterExpression.Compile()).ToDictionary((o) => keySelector.Invoke(o));
-            return Task.FromResult(data);
+                //var data = _dbContext.Set<TObject>().Where((Func<TObject, bool>)Context.Items["WherePredicate"]).Where(filterExpression.Compile()).ToDictionary((o) => keySelector.Invoke(o));
+                return Task.FromResult(data);
+            }
+            catch
+            {
+                return Task.FromResult<Dictionary<TKey, TObject>>(null);
+            }
         }
 
         public override Task RefreshKeys(IEnumerable<TKey> keys)
@@ -118,8 +126,16 @@ namespace DynamicData.SignalR
                     var groupedByIdentifier = changes.GroupBy(x => group.Invoke(x.Current));
                     foreach (var subGroup in groupedByIdentifier)
                     {
-                        json = Newtonsoft.Json.JsonConvert.SerializeObject(subGroup, new ChangeSetConverter<TObject, TKey>());
-                        tasks.Add(Clients.OthersInGroup(subGroup.Key).Changes(json));
+                        try
+                        {
+                            //new ChangeSet<TObject, TKey>(subGroup)
+                            json = Newtonsoft.Json.JsonConvert.SerializeObject(new ChangeSet<TObject, TKey>(subGroup), new ChangeSetConverter<TObject, TKey>());
+                            tasks.Add(Clients.OthersInGroup(subGroup.Key).Changes(json));
+                        }
+                        catch
+                        {
+                            var nothing = 0;
+                        }
                     }
                 }
             }
@@ -138,7 +154,7 @@ namespace DynamicData.SignalR
             await base.OnDisconnectedAsync(exception);
         }
 
-       
+
 
     }
 }

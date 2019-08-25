@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using DynamicData.Cache.Internal;
 using DynamicData.Kernel;
+using DynamicData.SignalR.Core;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Serialize.Linq.Serializers;
@@ -27,7 +28,7 @@ namespace DynamicData.SignalR
             :base(baseUrl, keySelectorExpression)
         {            
             _connection = new HubConnectionBuilder()
-                 .AddNewtonsoftJsonProtocol()
+                 //.AddNewtonsoftJsonProtocol()
                  .WithUrl($"{_baseUrl}", options =>
                  {
                      if (accessToken != null)

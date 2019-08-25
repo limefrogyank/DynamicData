@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using DynamicData.Cache.Internal;
 using DynamicData.Kernel;
+using DynamicData.SignalR.Core;
 using DynamicData.SignalR.JSInterop;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,29 +23,11 @@ namespace DynamicData.SignalR
 {
     internal sealed class SignalRObservableCache<TObject, TKey> : SignalRObservableCacheBase<TObject,TKey>
     {
-        //private readonly Subject<ChangeSet<TObject, TKey>> _changes = new Subject<ChangeSet<TObject, TKey>>();
-        //private readonly Subject<ChangeSet<TObject, TKey>> _changesPreview = new Subject<ChangeSet<TObject, TKey>>();
-        //private readonly Lazy<ISubject<int>> _countChanged = new Lazy<ISubject<int>>(() => new Subject<int>());
-        //private readonly SignalRReaderWriter<TObject, TKey> _readerWriter;
-        //private readonly IDisposable _cleanUp;
-        ////private readonly object _locker = new object();
-        //private readonly object _writeLock = new object();
-
-        ////private HubConnection _connection;        
-
-        //private readonly SemaphoreLocker _slocker = new SemaphoreLocker();
-
-        //private int _editLevel; // The level of recursion in editing.
-
         private readonly IJSRuntime _jsRuntime;
         private readonly string _accessToken;
 
         private SignalRReaderWriter<TObject, TKey> backupReference;
         private string _connectionKey;
-
-        //private readonly string _baseUrl;
-        //private readonly Expression<Func<TObject, TKey>> _keySelectorExpression;
-        //private Task initializationTask;
 
         public SignalRObservableCache(IJSRuntime jsRuntime, string baseUrl, Expression<Func<TObject, TKey>> keySelectorExpression, string accessToken)
             : base(baseUrl, keySelectorExpression)
@@ -93,7 +76,7 @@ namespace DynamicData.SignalR
                     await _jsRuntime.InvokeAsync<object>(
                        "dynamicDataSignalR.connect",
                          _connectionKey,
-                        new DotNetObjectRef(changeInvokeHelper));
+                        DotNetObjectRef.Create(changeInvokeHelper));
 
                     var serializer = new ExpressionSerializer(new JsonSerializer());
                     var expressionString = serializer.SerializeText(_keySelectorExpression);

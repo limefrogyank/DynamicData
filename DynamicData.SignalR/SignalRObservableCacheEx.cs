@@ -1,4 +1,5 @@
 ﻿using DynamicData.Annotations;
+using DynamicData.SignalR.Core;
 using System;
 using System.Collections.Generic;
 using System.Text;

@@ -1,4 +1,5 @@
 ﻿using DynamicData.Kernel;
+using DynamicData.SignalR.Core;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Serialize.Linq.Serializers;
@@ -9,9 +10,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace DynamicData.SignalR
+namespace DynamicData.SignalR.Server
 {
-    public class DynamicDataCacheHub<TObject, TKey, TContext> : Hub<IDynamicDataCacheClient<TObject,TKey>> where TContext : DbContext
+    public class DynamicDataCacheHub<TObject, TKey, TContext> : Hub<IDynamicDataCacheClient<TObject, TKey>> where TContext : DbContext
         where TObject : class
     {
         protected readonly TContext _dbContext;
@@ -26,8 +27,15 @@ namespace DynamicData.SignalR
         protected virtual Task SendChangesToOthersAsync(ChangeAwareCache<TObject, TKey> changeAwareCache)
         {
             var changes = changeAwareCache.CaptureChanges();
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(changes, new ChangeSetConverter<TObject, TKey>());
-            return Clients.Others.Changes(json);
+            try
+            {
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(changes, new ChangeSetConverter<TObject, TKey>());
+                return Clients.Others.Changes(json);
+            }
+            catch
+            {
+                return Task.CompletedTask;
+            }
         }
 
         public void Initialize(string keySelectorString)

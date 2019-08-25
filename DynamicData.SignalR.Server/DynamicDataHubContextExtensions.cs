@@ -1,21 +1,22 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using DynamicData.SignalR.Core;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace DynamicData.SignalR
+namespace DynamicData.SignalR.Server
 {
     public static class DynamicDataHubContextExtensions
     {
-        
-        public static async void ItemsAddedExternallyGroupOverride<THub,TObject,TKey,TContext>(
+
+        public static async void ItemsAddedExternallyGroupOverride<THub, TObject, TKey, TContext>(
             this IHubContext<THub> hubContext,
             IEnumerable<TObject> items,
             Func<TObject, TKey> keySelector,
             string groupIdentifier)
             where THub : Hub
-            where TContext: DbContext
+            where TContext : DbContext
             where TObject : class
         {
             try
@@ -27,7 +28,7 @@ namespace DynamicData.SignalR
                     changeAwareCache.AddOrUpdate(item, key);
                 }
 
-                  var changes = changeAwareCache.CaptureChanges();
+                var changes = changeAwareCache.CaptureChanges();
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(changes, new ChangeSetConverter<TObject, TKey>());
                 await hubContext.Clients.Group(groupIdentifier).SendAsync("Changes", json);
 

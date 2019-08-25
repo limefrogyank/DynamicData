@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using DynamicData.SignalR.Server;
 using DynamicData.SignalR.JSInterop.TestBlazorApp.Data;
 
 namespace DynamicData.SignalR.JSInterop.TestBlazorApp
@@ -35,16 +36,16 @@ namespace DynamicData.SignalR.JSInterop.TestBlazorApp
 
             services.AddRazorPages();
 
-            services.AddServerSideBlazor().AddSignalR().AddNewtonsoftJsonProtocol(config =>
-            {
-                config.PayloadSerializerSettings.ContractResolver = new DynamicData.SignalR.CustomContractResolver();
-            })
+            services.AddServerSideBlazor().AddSignalR();//.AddNewtonsoftJsonProtocol(config =>
+            //{
+            //    config.PayloadSerializerSettings.ContractResolver = new DynamicData.SignalR.CustomContractResolver();
+            //})
                 //hack to make other hubs work until preview-5 comes out.
-            .AddHubOptions<DynamicData.SignalR.DynamicDataCacheHub<TestModel.Person, string, TestContext>>(config =>
-            {
-                config.SupportedProtocols = new List<string>();
-                config.SupportedProtocols.Add("json");
-            });
+            //.AddHubOptions<DynamicData.SignalR.DynamicDataCacheHub<TestModel.Person, string, TestContext>>(config =>
+            //{
+            //    config.SupportedProtocols = new List<string>();
+            //    config.SupportedProtocols.Add("json");
+            //});
 
             services.AddSingleton<WeatherForecastService>();
         }
@@ -71,7 +72,7 @@ namespace DynamicData.SignalR.JSInterop.TestBlazorApp
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapBlazorHub();
-                endpoints.MapHub<DynamicData.SignalR.DynamicDataCacheHub<TestModel.Person, string, TestContext>>("/TestHub");
+                endpoints.MapHub<DynamicData.SignalR.Server.DynamicDataCacheHub<TestModel.Person, string, TestContext>>("/TestHub");
                 endpoints.MapFallbackToPage("/_Host");
             });
         }

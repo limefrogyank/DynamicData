@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using DynamicData.Kernel;
+using DynamicData.SignalR.Core;
 using Microsoft.JSInterop;
 
 namespace DynamicData.SignalR.JSInterop

@@ -7,7 +7,7 @@ using DynamicData.Cache.Internal;
 using DynamicData.Kernel;
 using Serialize.Linq.Serializers;
 
-namespace DynamicData.SignalR
+namespace DynamicData.SignalR.Core
 {
     public class SignalRRemoteUpdaterBase<TObject, TKey> : ISourceUpdater<TObject, TKey>
     {
@@ -16,7 +16,7 @@ namespace DynamicData.SignalR
         protected readonly Func<TObject, TKey> _keySelector;
         protected readonly string _selectorString;
 
-        public SignalRRemoteUpdaterBase(ICache<TObject,TKey> cache, Expression<Func<TObject, TKey>> keySelectorExpression = null)
+        public SignalRRemoteUpdaterBase(ICache<TObject, TKey> cache, Expression<Func<TObject, TKey>> keySelectorExpression = null)
         {
             _cache = cache ?? throw new ArgumentNullException(nameof(cache));
             _keySelectorExpression = keySelectorExpression;
@@ -65,7 +65,7 @@ namespace DynamicData.SignalR
                 foreach (var item in items)
                     _cache.AddOrUpdate(item, _keySelector(item));
             }
-           
+
         }
 
         public virtual void AddOrUpdate(TObject item)
@@ -110,7 +110,7 @@ namespace DynamicData.SignalR
         }
 
         public virtual void Clear()
-        {          
+        {
             _cache.Clear();
         }
 

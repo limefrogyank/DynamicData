@@ -8,7 +8,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace DynamicData.SignalR
+namespace DynamicData.SignalR.Core
 {
     public class CustomContractResolver : DefaultContractResolver
     {
@@ -22,7 +22,7 @@ namespace DynamicData.SignalR
             JsonContract contract = base.CreateContract(objectType);
 
 
-            if (objectType.IsGenericType )
+            if (objectType.IsGenericType)
             {
                 if (objectType.GetGenericTypeDefinition() == typeof(Change<>))
                 {
@@ -40,7 +40,7 @@ namespace DynamicData.SignalR
                 }
             }
 
-       
+
             return contract;
         }
     }
@@ -54,7 +54,7 @@ namespace DynamicData.SignalR
 
             writer.WritePropertyName("ChangeSetContents");
             var changeConverter = new ChangeConverter<TObject, TKey>();
-            var serializedChanges = Newtonsoft.Json.JsonConvert.SerializeObject(value.ToList(), changeConverter);
+            var serializedChanges = JsonConvert.SerializeObject(value.ToList(), changeConverter);
 
             writer.WriteRawValue(serializedChanges);
 
@@ -67,7 +67,7 @@ namespace DynamicData.SignalR
 
             serializer.Converters.Add(new ChangeConverter<TObject, TKey>());
             var changeSetContents = jsonObject["ChangeSetContents"].ToObject<List<Change<TObject, TKey>>>(serializer);
-            
+
             var changeSet = new ChangeSet<TObject, TKey>(changeSetContents);
             return changeSet;
         }
@@ -78,8 +78,7 @@ namespace DynamicData.SignalR
     }
 
 
-
-    public class ChangeConverter<TObject,TKey> : JsonConverter<Change<TObject,TKey>>
+    public class ChangeConverter<TObject, TKey> : JsonConverter<Change<TObject, TKey>>
     {
         public override void WriteJson(JsonWriter writer, Change<TObject, TKey> value, JsonSerializer serializer)
         {
@@ -98,7 +97,7 @@ namespace DynamicData.SignalR
                 writer.WritePropertyName("Previous");
                 serializer.Serialize(writer, value.Previous.Value);
             }
-            
+
             writer.WritePropertyName("PreviousIndex");
             serializer.Serialize(writer, value.PreviousIndex);
             writer.WritePropertyName("Reason");

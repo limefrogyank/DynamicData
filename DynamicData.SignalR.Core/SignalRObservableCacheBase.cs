@@ -7,7 +7,7 @@ using System.Reactive.Subjects;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DynamicData.SignalR
+namespace DynamicData.SignalR.Core
 {
     public abstract class SignalRObservableCacheBase<TObject, TKey> : IObservableCache<TObject, TKey>
     {
@@ -16,7 +16,7 @@ namespace DynamicData.SignalR
         protected readonly Lazy<ISubject<int>> _countChanged = new Lazy<ISubject<int>>(() => new Subject<int>());
         protected readonly object _writeLock = new object();
         protected readonly SemaphoreLocker _slocker = new SemaphoreLocker();
-        
+
         protected SignalRReaderWriterBase<TObject, TKey> _readerWriter;
         protected IDisposable _cleanUp;
 
@@ -119,7 +119,7 @@ namespace DynamicData.SignalR
         protected async Task<ChangeSet<TObject, TKey>> GetInitialUpdatesAsync(Expression<Func<TObject, bool>> filterExpression = null)
         {
             if (initializationTask != null)
-            await initializationTask;
+                await initializationTask;
             return await _readerWriter.GetInitialUpdates(filterExpression);
         }
 

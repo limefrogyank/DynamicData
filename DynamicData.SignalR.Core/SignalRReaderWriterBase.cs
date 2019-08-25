@@ -7,7 +7,7 @@ using System.Reactive.Subjects;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DynamicData.SignalR
+namespace DynamicData.SignalR.Core
 {
     public abstract class SignalRReaderWriterBase<TObject, TKey>
     {
@@ -16,7 +16,7 @@ namespace DynamicData.SignalR
 
         protected Dictionary<TKey, TObject> _data = new Dictionary<TKey, TObject>(); //could do with priming this on first time load
         protected SignalRRemoteUpdaterBase<TObject, TKey> _remoteUpdater;
-        
+
         protected Subject<ChangeSet<TObject, TKey>> _onChanges;
         public IObservable<ChangeSet<TObject, TKey>> Changes => _onChanges.AsObservable();
 
@@ -33,7 +33,7 @@ namespace DynamicData.SignalR
             _keySelector = _keySelectorExpression.Compile();
         }
 
-        
+
         protected ChangeSet<TObject, TKey> ReplaceInstancesWithCachedInstances(ChangeSet<TObject, TKey> deserializedChanges)
         {
             var localChangeSet = new ChangeSet<TObject, TKey>();
@@ -171,7 +171,7 @@ namespace DynamicData.SignalR
         {
             get
             {
-                return _slocker.Lock<int>(() =>
+                return _slocker.Lock(() =>
                 {
                     //(_locker)
                     return _data.Count;

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace DynamicData.SignalR
+namespace DynamicData.SignalR.Server
 {
     public interface IDynamicDataCacheClient<TObject, TKey> where TObject : class
     {
