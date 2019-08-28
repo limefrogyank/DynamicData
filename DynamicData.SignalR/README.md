@@ -88,11 +88,6 @@ public class CourseHub : DynamicData.SignalR.DynamicDataPredicateHub<Course, str
     }
 ```
 
-#### Optional
-`Context.Items["GroupPredicates"]` -> While `GroupIdentifier` is used to define the default "group" to send all change messages to, you may want to define other groups that need to see those changes.  `GroupPredicates` is a `List<Func<TObject,string>>` that you can use to define more groups to send the changes messages *related to those items only*.  
-
-
-
 ### Customizing EntityFrameworkCore query even further
 If you want to `Include` foreign key relationships into your regular class, you can do that by subclassing either of the two hubs above and adding some strings to the `IncludeChain` `List<string>` in the constructor of the Hub.
 
