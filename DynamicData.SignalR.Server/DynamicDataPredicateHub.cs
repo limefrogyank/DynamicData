@@ -15,14 +15,51 @@ namespace DynamicData.SignalR.Server
         where TContext : DbContext
         where TObject : class
     {
+        abstract protected Func<TObject,bool> WherePredicate { get; }
+
+        virtual protected List<Func<TObject, string>> GroupPredicates => new List<Func<TObject, string>>();
+
         public DynamicDataPredicateHub(TContext dbContext) : base(dbContext)
         {
 
         }
 
+        //protected Func<TObject, bool> GetWherePredicate()
+        //{
+        //    var wherePredicateString = (string)Context.Items["WherePredicate"];
+        //    var deserializer = new ExpressionSerializer(new JsonSerializer());
+        //    var wherePredicateExpression = (Expression<Func<TObject, bool>>)deserializer.DeserializeText(wherePredicateString);
+
+        //    var wherePredicate = wherePredicateExpression.Compile();
+        //    return wherePredicate;
+        //}
+
+        //protected List<Func<TObject, string>> GetGroupPredicates()
+        //{
+        //    if (Context.Items.ContainsKey("GroupPredicates"))
+        //    {
+        //        var predicates = new List<Func<TObject, string>>();
+        //        var groupPredicatesStrings = (List<string>)Context.Items["GroupPredicates"];
+        //        var deserializer = new ExpressionSerializer(new JsonSerializer());
+        //        foreach (var groupPredicateString in groupPredicatesStrings)
+        //        {                    
+        //            var groupPredicateExpression = (Expression<Func<TObject, string>>)deserializer.DeserializeText(groupPredicateString);
+
+        //            var groupPredicate = groupPredicateExpression.Compile();
+        //            predicates.Add(groupPredicate);
+        //        }
+        //        return predicates;
+        //    }
+        //    else
+        //    {
+        //        return new List<Func<TObject, string>>();
+        //    }
+        //}
+
         public override Task AddOrUpdateObjects(IEnumerable<TObject> items)
         {
-            var justOwned = items.Where((Func<TObject, bool>)Context.Items["WherePredicate"]).ToList();
+            //var justOwned = items.Where((Func<TObject, bool>)Context.Items["WherePredicate"]).ToList();
+            var justOwned = items.Where(WherePredicate).ToList();
             return base.AddOrUpdateObjects(justOwned);
         }
 
@@ -35,11 +72,12 @@ namespace DynamicData.SignalR.Server
 
         public override Dictionary<TKey, TObject> GetKeyValuePairs()
         {
-            var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+            //var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+            var keySelector = GetKeySelector();
 
             IQueryable<TObject> query = _dbContext.Set<TObject>();
             query = ChainIncludes(query);
-            var data = query.Where((Func<TObject, bool>)Context.Items["WherePredicate"]).ToDictionary((o) => keySelector.Invoke(o));
+            var data = query.Where(WherePredicate).ToDictionary((o) => keySelector.Invoke(o));
             //_dbContext.Set<TObject>().Where((Func<TObject, bool>)Context.Items["WherePredicate"]).ToDictionary((o) => keySelector.Invoke(o));
             return data;
         }
@@ -48,12 +86,13 @@ namespace DynamicData.SignalR.Server
         {
             try
             {
-                var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+                //var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+                var keySelector = GetKeySelector(); 
                 var deserializer = new ExpressionSerializer(new JsonSerializer());
                 var filterExpression = (Expression<Func<TObject, bool>>)deserializer.DeserializeText(predicateFilterString);
                 IQueryable<TObject> query = _dbContext.Set<TObject>();
                 query = ChainIncludes(query);
-                var data = query.Where((Func<TObject, bool>)Context.Items["WherePredicate"]).Where(filterExpression.Compile()).ToDictionary((o) => keySelector.Invoke(o));
+                var data = query.Where(WherePredicate).Where(filterExpression.Compile()).ToDictionary((o) => keySelector.Invoke(o));
 
                 //var data = _dbContext.Set<TObject>().Where((Func<TObject, bool>)Context.Items["WherePredicate"]).Where(filterExpression.Compile()).ToDictionary((o) => keySelector.Invoke(o));
                 return Task.FromResult(data);
@@ -66,7 +105,8 @@ namespace DynamicData.SignalR.Server
 
         public override Task RefreshKeys(IEnumerable<TKey> keys)
         {
-            var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+            //var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+            var keySelector = GetKeySelector(); 
             Dictionary<TObject, TKey> existing = new Dictionary<TObject, TKey>();
 
             foreach (var key in keys)
@@ -77,20 +117,21 @@ namespace DynamicData.SignalR.Server
                     existing.Add(found, key);
                 }
             }
-            var ownedObjects = existing.Select(x => x.Key).Where((Func<TObject, bool>)Context.Items["WherePredicate"]).ToDictionary((x) => keySelector(x));
+            var ownedObjects = existing.Select(x => x.Key).Where(WherePredicate).ToDictionary((x) => keySelector(x));
 
             return base.RefreshKeys(existing.Select(x => x.Value));
         }
 
         public override Task RemoveItems(IEnumerable<TObject> items)
         {
-            var ownedItems = items.Where((Func<TObject, bool>)Context.Items["WherePredicate"]);
+            var ownedItems = items.Where(WherePredicate);
             return base.RemoveItems(ownedItems);
         }
 
         public override async Task RemoveKeys(IEnumerable<TKey> keys)
         {
-            var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+            //var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+            var keySelector = GetKeySelector(); 
             Dictionary<TObject, TKey> existing = new Dictionary<TObject, TKey>();
 
             foreach (var key in keys)
@@ -101,7 +142,7 @@ namespace DynamicData.SignalR.Server
                     existing.Add(found, key);
                 }
             }
-            var ownedObjects = existing.Select(x => x.Key).Where((Func<TObject, bool>)Context.Items["WherePredicate"]).ToDictionary((x) => keySelector(x));
+            var ownedObjects = existing.Select(x => x.Key).Where(WherePredicate).ToDictionary((x) => keySelector(x));
 
             await base.RemoveKeys(existing.Select(x => x.Value));
         }
@@ -109,7 +150,8 @@ namespace DynamicData.SignalR.Server
         protected override Task SendChangesToOthersAsync(ChangeAwareCache<TObject, TKey> changeAwareCache)
         {
             //var groupIdentifier = (string)Context.Items["GroupIdentifier"];
-            var groupPredicates = (List<Func<TObject, string>>)Context.Items["GroupPredicates"];
+            //var groupPredicates = (List<Func<TObject, string>>)Context.Items["GroupPredicates"];
+            //var groupPredicates = GetGroupPredicates();
 
             List<Task> tasks = new List<Task>();
             var changes = changeAwareCache.CaptureChanges();
@@ -119,9 +161,9 @@ namespace DynamicData.SignalR.Server
             tasks.Add(Clients.OthersInGroup((string)Context.Items["GroupIdentifier"]).Changes(json));
 
             // send to other groups if defined
-            if (groupPredicates != null)
-            {
-                foreach (var group in groupPredicates)
+            //if (groupPredicates != null)
+            //{
+                foreach (var group in GroupPredicates)
                 {
                     var groupedByIdentifier = changes.GroupBy(x => group.Invoke(x.Current));
                     foreach (var subGroup in groupedByIdentifier)
@@ -138,7 +180,7 @@ namespace DynamicData.SignalR.Server
                         }
                     }
                 }
-            }
+            //}
             return Task.WhenAll(tasks);
         }
 

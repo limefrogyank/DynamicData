@@ -37,7 +37,7 @@ This is the hub you'll need if you want to use Authentication of some kind.  You
 
 `Context.Items["GroupIdentifier"]` -> this is a string that will limit who gets `ChangeSet` messages.  The most likely scenario is to restrict those messages to a particular logged in user.  If that user has more than one `SignalRSourceCache` connecting to this hub, while they have different ConnectionIds, by setting the GroupIdentifier as an authenticated userId, only your `SignalRSourceCache`s will get those messages.
 
-`Context.Items["WherePredicate"]` -> You need to tell the hub how to limit queries to the database for each user.  The most likely scenarios is one where your models have an `OwnerId` field.  You will want to limit all queries for a user to items that they own.
+`WherePredicate` -> You need to tell the hub how to limit queries to the database for each user.  The most likely scenarios is one where your models have an `OwnerId` field.  You will want to limit all queries for a user to items that they own.
 
 An example might look like this:
 ```

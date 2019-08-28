@@ -38,15 +38,19 @@ namespace DynamicData.SignalR.Server
             }
         }
 
-        public void Initialize(string keySelectorString)
+        protected Func<TObject,TKey> GetKeySelector()
         {
+            var keySelectorString = (string)Context.Items["KeySelector"];
             var deserializer = new ExpressionSerializer(new JsonSerializer());
             var keySelectorExpression = (Expression<Func<TObject, TKey>>)deserializer.DeserializeText(keySelectorString);
 
             var keySelector = keySelectorExpression.Compile();
+            return keySelector;
+        }
 
-            Context.Items["KeySelector"] = keySelector;
-
+        public void Initialize(string keySelectorString)
+        {            
+            Context.Items["KeySelector"] = keySelectorString;
         }
 
         protected IQueryable<TObject> ChainIncludes(IQueryable<TObject> query)
@@ -68,15 +72,16 @@ namespace DynamicData.SignalR.Server
 
         public virtual Dictionary<TKey, TObject> GetKeyValuePairs()
         {
-            var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
-
+            //var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+            var keySelector = GetKeySelector();
             var data = StartQuery().ToDictionary((o) => keySelector.Invoke(o));
             return data;
         }
 
         public virtual Task<Dictionary<TKey, TObject>> GetKeyValuePairsFiltered(string predicateFilterString)
         {
-            var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+            //var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+            var keySelector = GetKeySelector();
 
             var deserializer = new ExpressionSerializer(new JsonSerializer());
             var filterExpression = (Expression<Func<TObject, bool>>)deserializer.DeserializeText(predicateFilterString);
@@ -91,7 +96,8 @@ namespace DynamicData.SignalR.Server
         {
             try
             {
-                var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+                //var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+                var keySelector = GetKeySelector();
                 Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
 
                 foreach (var item in items)
@@ -131,7 +137,8 @@ namespace DynamicData.SignalR.Server
 
         public virtual async Task RemoveItems(IEnumerable<TObject> items)
         {
-            var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+            //var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
+            var keySelector = GetKeySelector(); 
             Dictionary<TKey, TObject> existing = new Dictionary<TKey, TObject>();
 
             foreach (var item in items)
