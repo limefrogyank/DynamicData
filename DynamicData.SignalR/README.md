@@ -1,10 +1,10 @@
-## You must use netcore v4 (preview) for this to work! ##
+## You must use aspnetcore3.0 (preview8) for this to work! ##
 
 See the sample aspnetcore app for an example of how to setup SignalR and use one of the two generic hubs listed below.  You must be using EntityFrameworkCore and some kind of database (any will do).  The sample uses Sqlite for convenience.
 
 If you want to use this project in Blazor, see https://github.com/limefrogyank/DynamicData/tree/master/DynamicData.SignalR.JSInterop for a version that can communicate using the javascript version of SignalR.  
 
-## Demo (using Blazor)
+## Demo (using Blazor **CURRENTLY BROKEN**)
 
 https://dynamicdatasignalrjsinteroptest.azurewebsites.net/
 
@@ -33,25 +33,36 @@ Just put this into your `Startup.cs` where you map your SignalR hubs like so:
 `TObject` is your model, `TKey` is your cache key AND your database primary key, and `TContext` is your EntityFrameworkCore `DbContext` class.  That's all that's needed.
 
 ### `abstract DynamicDataPredicateHub<TObject,TKey,TContext>` 
-This is the hub you'll need if you want to use Authentication of some kind.  You'll have to subclass it so that you can create the logic that determines what the user is allowed to access from the database.  SignalR creates a new Hub instance for each method call, so you have to store two variables in the `Context.Items` dictionary.
+This is the hub you'll need if you want to use Authentication of some kind.  You'll have to subclass it so that you can create the logic that determines what the user is allowed to access from the database.  SignalR creates a new Hub instance for each method call, so you have to store state in the `Context.Items` dictionary.
 
-`Context.Items["GroupIdentifier"]` -> this is a string that will limit who gets `ChangeSet` messages.  The most likely scenario is to restrict those messages to a particular logged in user.  If that user has more than one `SignalRSourceCache` connecting to this hub, while they have different ConnectionIds, by setting the GroupIdentifier as an authenticated userId, only your `SignalRSourceCache`s will get those messages.
+#### `Context.Items["GroupIdentifier"]` 
+This is a string that will limit who gets `ChangeSet` messages.  The most likely scenario is to restrict those messages to a particular logged in user.  If that user has more than one `SignalRSourceCache` connecting to this hub, while they have different ConnectionIds, by setting the GroupIdentifier as an authenticated userId, only your `SignalRSourceCache`s will get those messages.  Since this is only known when a connection is made, this must be stored in the `Context.Items` dictionary.
 
-`WherePredicate` -> You need to tell the hub how to limit queries to the database for each user.  The most likely scenarios is one where your models have an `OwnerId` field.  You will want to limit all queries for a user to items that they own.
+#### `WherePredicate`
+You need to tell the hub how to limit queries to the database for each user.  The most likely scenarios is one where your models have an `OwnerId` field.  You will want to limit all queries for a user to items that they own.  This is an `abstract` property that must be overridden on your derived hub class.  The type is `Func<TObject,bool>` where the `TObject` is the item type your collection is made of and it returns a boolean indicating whether or not the item should be shown to the user.
 
-An example might look like this:
+#### `GroupPredicate` 
+*Optional* virtual property of type `List<Func<TObject,string>>`.  Basically, if you need to send any changes to a person other than the current user, this is where you do it.  For each item that is updated/added/deleted/etc (i.e. `ChangeSet` items in DynamicData), also send to the userId string that the delegate provides.  You can provide several delegates (hence the `List`) for this purpose if necessary. 
+
+For example, you have a list of `File` that all are owned by the respective users who submitted each `File`.  However, each `File` also belongs to a specific `Folder` and that `Folder` is owned by a single person.  This would happen in a dropbox type network share folder.  When a user makes a change to the `File`, you need the owner of the `Folder` to also receive change notifications.  Therefore, you would setup `GroupPredicates` in your custom hub like this:
+
+```
+protected override List<Func<File, string>> GroupPredicates => item => item.FolderParent.OwnerId;
+```
+
+An full example might look like this:
 ```
 public class CourseHub : DynamicData.SignalR.DynamicDataPredicateHub<Course, string, DatabaseContext>
     {
-        public CourseHub(DatabaseContext databaseContext): base(databaseContext)
+        protected override Func<Course,bool> WherePredicate => course => course.OwnerId == Context.Items["GroupIdentifier"];
+        
+	public CourseHub(DatabaseContext databaseContext): base(databaseContext)
         { }
 
         public override async Task OnConnectedAsync()
         {
             var userId = GetUserId();
             Context.Items["GroupIdentifier"] = userId;
-            Context.Items["WherePredicate"] = (Func<Course,bool>)( (course) => course.OwnerId == userId);
-                    
             await base.OnConnectedAsync();
         }
 
@@ -76,16 +87,6 @@ public class CourseHub : DynamicData.SignalR.DynamicDataPredicateHub<Course, str
         }
     }
 ```
-
-#### Optional
-`Context.Items["GroupPredicates"]` -> While `GroupIdentifier` is used to define the default "group" to send all change messages to, you may want to define other groups that need to see those changes.  `GroupPredicates` is a `List<Func<TObject,string>>` that you can use to define more groups to send the changes messages *related to those items only*.  
-
-For example, you have a list of `File` that all are owned by the respective users who submitted each `File`.  However, each `File` also belongs to a specific `Folder` and that `Folder` is owned by a single person.  This would happen in a dropbox type network share folder.  When a user makes a change to the `File`, you need the owner of the `Folder` to also receive change notifications.  Therefore, you would setup `GroupPredicates` in your custom hub like this:
-
-```
-Context.Items["GroupPredicates"] = new List<Func<File, string>>() { (item)=> item.FolderParent.OwnerId };
-```
-
 
 ### Customizing EntityFrameworkCore query even further
 If you want to `Include` foreign key relationships into your regular class, you can do that by subclassing either of the two hubs above and adding some strings to the `IncludeChain` `List<string>` in the constructor of the Hub.
