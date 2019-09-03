@@ -89,7 +89,7 @@ public class CourseHub : DynamicData.SignalR.DynamicDataPredicateHub<Course, str
 ```
 
 ### Customizing EntityFrameworkCore query even further
-If you want to `Include` foreign key relationships into your regular class, you can do that by subclassing either of the two hubs above and adding some strings to the `IncludeChain` `List<string>` in the constructor of the Hub.
+If you want to `Include` foreign key relationships into your regular class, you can do that by subclassing either of the two hubs above and adding some strings to the `IncludeReference` (for objects) or `IncludeCollection` (for collections) `List<string>` in the constructor of the Hub.  These are virtual properties so you can just override them, too.  
 
 For example, if your `DbContext` would be setup like this, where there is a one-to-many relationship between `Owner` and `Course` (i.e. one owner can have many courses):
 
@@ -108,14 +108,15 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 To get EntityFrameworkCore to actually include the `Owner` model in your `Course` query, you have to specifically add `.Include(course=>course.Owner)`.  Instead of rewriting the `DynamicDataHub`, just and add this to the constructor:
 
 ```
-IncludeChain.Add("Owner");
+IncludeReference.Add("Owner");
 ```
+That's it.  You can add multiple string paths to the properties you want to include.  You **must** add it to the constructor or override the property because the state will not be preserved between method calls... the Hub will be re-constructed each time.  The decision to use class variables here rather than `Context.Items` was because anything added to `Context.Items` becomes part of the data passed back and forth from client to server in SignalR.  We want to minimize the bandwidth used.
 
-That's it.  You can add multiple string paths to the properties you want to include.  You **must** add it to the constructor because the state will not be preserved between method calls... the Hub will be re-constructed each time.  The decision to use class variables here rather than `Context.Items` was because anything added to `Context.Items` becomes part of the data passed back and forth from client to server in SignalR.  We want to minimize the bandwidth used.
+When you add or update an object/entity, instead of using the query path, we just explicitly load these properties onto the entity object.  (The reason for the two different lists, `IncludeReference` and `IncludeCollection`, are due to the API used to retreive these related properties from an already referenced object.)
 
 #### Quirks and things to avoid
 
-While you can use child entities in your main entity for each cache, there are going to be problems if you actually try to add a new entity that contains a child entity (like a parent class) that already exists in the database.  Due to the generic nature of the Hub in this repo, there's no way to automatically tell it to update the child entities, rather then try to add them (along with the main one).  If your child entites are `null` when you add them, there's no problem.  But if you need them for some predicate logic, you should override the `AddOrUpdateAsync` method in your subclassed `DynamicDataPredicateHub` and tell EntityFrameworkCore to ignore the child objects.  The foreign keys themselves are fine, just not the objects they link to.
+While you can use child entities in your main entity for each cache, there are going to be problems if you actually try to add a new entity that contains a child entity (like a parent class) that already exists in the database.  Due to the generic nature of the Hub in this repo, there's no way to automatically tell it to update the child entities, rather than try to add them (along with the main one).  If your child entites are `null` when you add them, there's no problem.  But if you need them for some predicate logic, you should override the `AddOrUpdateAsync` method in your subclassed `DynamicDataPredicateHub` and tell EntityFrameworkCore to ignore the child objects.  The foreign keys themselves are fine, just not the objects they link to.
 
 ```
 public override Task AddOrUpdateObjects(IEnumerable<AttendanceItem> items)
