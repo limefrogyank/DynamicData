@@ -1,7 +1,6 @@
 ﻿using DynamicData.Cache.Internal;
 using DynamicData.Kernel;
 using DynamicData.SignalR.Core;
-using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.JSInterop;
 using Serialize.Linq.Serializers;
 using System;

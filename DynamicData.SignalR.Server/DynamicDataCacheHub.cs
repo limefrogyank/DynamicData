@@ -17,10 +17,12 @@ namespace DynamicData.SignalR.Server
     {
         protected readonly TContext _dbContext;
 
-        protected List<string> IncludeChain { get; set; } = new List<string>();
+        protected virtual List<string> IncludeReference { get; set; } = new List<string>();
+        protected virtual List<string> IncludeCollection { get; set; } = new List<string>();
 
         public DynamicDataCacheHub(TContext dbContext)
         {
+            
             _dbContext = dbContext;
         }
 
@@ -53,16 +55,28 @@ namespace DynamicData.SignalR.Server
             Context.Items["KeySelector"] = keySelectorString;
         }
 
+        protected void LoadIncludes(TObject item)
+        {
+            foreach (var reference in IncludeReference)
+            {
+                if (!reference.Contains("."))
+                    _dbContext.Entry(item).Reference(reference).Load();
+            }
+
+            foreach (var collection in IncludeCollection)
+            {
+                if (!collection.Contains("."))
+                    _dbContext.Entry(item).Collection(collection).Load();
+            }
+        }
+
         protected IQueryable<TObject> ChainIncludes(IQueryable<TObject> query)
         {
-            //var includeChain = (List<string>)Context.Items["IncludeChain"];
-            //if (includeChain == null)
-            //    return query;
-            foreach (var includeString in IncludeChain)
+            foreach (var includeString in IncludeReference.Concat(IncludeCollection))
                 query = query.Include(includeString);
             return query;
         }
-
+        
         protected IQueryable<TObject> StartQuery()
         {
             IQueryable<TObject> query = _dbContext.Set<TObject>();
@@ -110,20 +124,21 @@ namespace DynamicData.SignalR.Server
                         _dbContext.Entry(found).CurrentValues.SetValues(item);
                     }
                     else
+                    {
                         _dbContext.Add(item);
+                    }
                 }
 
                 _dbContext.SaveChanges();
 
                 var changeAwareCache = new ChangeAwareCache<TObject, TKey>(existing);
                 foreach (var item in items)
-                {
+                { 
                     var key = keySelector.Invoke(item);
+                    LoadIncludes(item);                    
                     changeAwareCache.AddOrUpdate(item, key);
                 }
-
-
-
+                               
                 await SendChangesToOthersAsync(changeAwareCache);
 
             }
@@ -271,17 +286,21 @@ namespace DynamicData.SignalR.Server
             await SendChangesToOthersAsync(changeAwareCache);
         }
 
-        public override Task OnConnectedAsync()
-        {
-            Debug.WriteLine("Connected");
-            return base.OnConnectedAsync();
-        }
+        ///// <summary>
+        ///// 
+        ///// </summary>
+        ///// <returns></returns>
+        //public override Task OnConnectedAsync()
+        //{
+        //    Debug.WriteLine("Connected");
+        //    return base.OnConnectedAsync();
+        //}
 
-        public override Task OnDisconnectedAsync(Exception exception)
-        {
-            Debug.WriteLine("Disconnected");
-            return base.OnDisconnectedAsync(exception);
-        }
+        //public override Task OnDisconnectedAsync(Exception exception)
+        //{
+        //    Debug.WriteLine("Disconnected");
+        //    return base.OnDisconnectedAsync(exception);
+        //}
 
 
     }

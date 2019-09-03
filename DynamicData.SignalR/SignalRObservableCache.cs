@@ -28,7 +28,12 @@ namespace DynamicData.SignalR
             :base(baseUrl, keySelectorExpression)
         {            
             _connection = new HubConnectionBuilder()
+
                  //.AddNewtonsoftJsonProtocol()
+                 .AddNewtonsoftJsonProtocol(options =>
+                 {
+                     options.PayloadSerializerSettings.PreserveReferencesHandling = Newtonsoft.Json.PreserveReferencesHandling.Objects;
+                 })
                  .WithUrl($"{_baseUrl}", options =>
                  {
                      if (accessToken != null)
@@ -43,6 +48,7 @@ namespace DynamicData.SignalR
                      //    return handler;
                      //};
                  })
+                 
                  .Build();
             
 

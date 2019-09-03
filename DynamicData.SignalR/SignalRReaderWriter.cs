@@ -2,6 +2,7 @@
 using DynamicData.Kernel;
 using DynamicData.SignalR.Core;
 using Microsoft.AspNetCore.SignalR.Client;
+using Newtonsoft.Json;
 using Serialize.Linq.Serializers;
 using System;
 using System.Collections.Generic;
@@ -34,8 +35,12 @@ namespace DynamicData.SignalR
             //setting contract resolver on ConnectionBuilder is throwing an exception... solve it later, just deserialize manually
             _connection.On("Changes", (string changeSetJson) =>
             {
-
-                var changeSet = Newtonsoft.Json.JsonConvert.DeserializeObject<ChangeSet<TObject, TKey>>(changeSetJson, new ChangeSetConverter<TObject, TKey>());
+                var settings = new JsonSerializerSettings()
+                {
+                    Converters = new[] { new ChangeSetConverter<TObject, TKey>() },
+                    PreserveReferencesHandling = PreserveReferencesHandling.Objects
+                };
+                var changeSet = Newtonsoft.Json.JsonConvert.DeserializeObject<ChangeSet<TObject, TKey>>(changeSetJson, settings);
                 var localChangeSet = ReplaceInstancesWithCachedInstances(changeSet);
                 foreach (var change in changeSet)
                 {
@@ -128,7 +133,7 @@ namespace DynamicData.SignalR
                 else
                 {
                     filter = filterExpression.Compile();
-                    var serializer = new ExpressionSerializer(new JsonSerializer());
+                    var serializer = new ExpressionSerializer(new Serialize.Linq.Serializers.JsonSerializer());
                     var expressionString = serializer.SerializeText(filterExpression);
                     _data = await _connection.InvokeAsync<Dictionary<TKey, TObject>>("GetKeyValuePairsFiltered", expressionString);
                 }

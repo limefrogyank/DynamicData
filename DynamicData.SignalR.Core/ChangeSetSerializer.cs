@@ -50,6 +50,7 @@ namespace DynamicData.SignalR.Core
     {
         public override void WriteJson(JsonWriter writer, ChangeSet<TObject, TKey> value, JsonSerializer serializer)
         {
+            
             writer.WriteStartObject();
 
             writer.WritePropertyName("ChangeSetContents");
@@ -113,7 +114,7 @@ namespace DynamicData.SignalR.Core
             {
                 return new Change<TObject, TKey>(
                   JsonConvert.DeserializeObject<TKey>((string)jsonObject["Key"]),
-                  jsonObject["Current"].ToObject<TObject>(),
+                  jsonObject["Current"].ToObject<TObject>(serializer),
                   //JsonConvert.DeserializeObject<TObject>((string)jsonObject["Current"]),
                   JsonConvert.DeserializeObject<int>((string)jsonObject["CurrentIndex"]),
                   JsonConvert.DeserializeObject<int>((string)jsonObject["PreviousIndex"])
@@ -123,17 +124,17 @@ namespace DynamicData.SignalR.Core
             {
                 return new Change<TObject, TKey>(
                   changeReason,
-                  jsonObject["Key"].ToObject<TKey>(),
-                  jsonObject["Current"].ToObject<TObject>(),
-                  Optional.Some(jsonObject["Previous"].ToObject<TObject>())
+                  jsonObject["Key"].ToObject<TKey>(serializer),
+                  jsonObject["Current"].ToObject<TObject>(serializer),
+                  Optional.Some(jsonObject["Previous"].ToObject<TObject>(serializer))
                   );
             }
             else
             {
                 return new Change<TObject, TKey>(
                   changeReason,
-                  jsonObject["Key"].ToObject<TKey>(),
-                  jsonObject["Current"].ToObject<TObject>(),
+                  jsonObject["Key"].ToObject<TKey>(serializer),
+                  jsonObject["Current"].ToObject<TObject>(serializer),
                   (int)jsonObject["CurrentIndex"]
                   );
             }

@@ -78,6 +78,11 @@ namespace DynamicData.SignalR.Server
             IQueryable<TObject> query = _dbContext.Set<TObject>();
             query = ChainIncludes(query);
             var data = query.Where(WherePredicate).ToDictionary((o) => keySelector.Invoke(o));
+
+            if (data == null)
+            {
+                data = new Dictionary<TKey, TObject>();
+            }
             //_dbContext.Set<TObject>().Where((Func<TObject, bool>)Context.Items["WherePredicate"]).ToDictionary((o) => keySelector.Invoke(o));
             return data;
         }
@@ -184,12 +189,15 @@ namespace DynamicData.SignalR.Server
             return Task.WhenAll(tasks);
         }
 
+        /// <inheritdoc/>
         public override async Task OnConnectedAsync()
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, (string)Context.Items["GroupIdentifier"]);//(string)Context.Items["GroupIdentifier"]);
+
             await base.OnConnectedAsync();
         }
 
+        /// <inheritdoc/>
         public override async Task OnDisconnectedAsync(Exception exception)
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, (string)Context.Items["GroupIdentifier"]);//(string)Context.Items["GroupIdentifier"]);

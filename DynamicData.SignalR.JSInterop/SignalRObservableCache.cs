@@ -14,7 +14,6 @@ using DynamicData.Cache.Internal;
 using DynamicData.Kernel;
 using DynamicData.SignalR.Core;
 using DynamicData.SignalR.JSInterop;
-using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Serialize.Linq.Serializers;
