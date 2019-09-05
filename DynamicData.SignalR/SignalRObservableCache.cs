@@ -30,6 +30,7 @@ namespace DynamicData.SignalR
             _connection = new HubConnectionBuilder()
 
                  //.AddNewtonsoftJsonProtocol()
+                 
                  .AddNewtonsoftJsonProtocol(options =>
                  {
                      options.PayloadSerializerSettings.PreserveReferencesHandling = Newtonsoft.Json.PreserveReferencesHandling.Objects;
