@@ -61,12 +61,35 @@ namespace DynamicData.SignalR.Server
             {
                 if (!reference.Contains("."))
                     _dbContext.Entry(item).Reference(reference).Load();
+                else
+                {
+                    var references = reference.Split('.');
+                    var referenceEntry = _dbContext.Entry(item).Reference<dynamic>(references[0]);
+                    IQueryable<dynamic> query = referenceEntry.Query();
+                    for (var i=1; i<references.Length; i++)
+                    {
+                        query = query.Include(references[i]);
+                    }
+                    query.Load();
+                }
             }
 
             foreach (var collection in IncludeCollection)
             {
                 if (!collection.Contains("."))
                     _dbContext.Entry(item).Collection(collection).Load();
+                else
+                {
+                    // assumes first property name is a reference, not another collection
+                    var references = collection.Split('.');
+                    var referenceEntry = _dbContext.Entry(item).Reference<dynamic>(references[0]);
+                    IQueryable<dynamic> query = referenceEntry.Query();
+                    for (var i = 1; i < references.Length; i++)
+                    {
+                        query = query.Include(references[i]);
+                    }
+                    query.Load();
+                }
             }
         }
 
