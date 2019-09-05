@@ -171,20 +171,20 @@ public async Task DoSomeChangeToTheDatabase()
 
 ## Using the `SignalRSourceCache<TObject,TKey>`
 
-For the most part, this is used very similarly to the standard `SourceCache<TObject,TKey>`.  
+For the most part, this is used similarly to the standard `SourceCache<TObject,TKey>`.  However, you can't use an anonymous function to select the key in your object.  Since everything must be serializable, you have to generate an `Expression` of a `Func<TObject,TKey>`.  An example of how this works is below and is equivalent to writing `course => course.Id` as the `SourceCache<TObject,TKey>` parameter. 
 ```
 var param = Expression.Parameter(typeof(Course), "course");
 var body = Expression.PropertyOrField(param, "Id");
 var lambda = Expression.Lambda<Func<Course, string>>(body, param);
 courseCache = new DynamicData.SignalR.SignalRSourceCache<Course, string>("/CourseHub", lambda);
 ```
-**This immediately creates a connection asynchronously!**  This may be important when using the authentication overload...
+For hubs that require authentication/authorization, you must use this overload:
 ```
 courseCache = new DynamicData.SignalR.SignalRSourceCache<Course, string>("/CourseHub", lambda, authService.accessToken);
 ```
-You *can* use the `AsObservableCache()` extension to create a read-only copy, but then you will lose the ability (for now) to `Connect()` with a predicate.  The current overload of using a `Func<TObject,bool>` will **not** work since it needs to be an `Expression` like the sample above.  An alternative might be to put the cache behind a service and only expose a custom Connect method.
+**WARNING:  This immediately creates a connection asynchronously!**
 
-Since the connection is created asynchronously, to be sure that you are ready to edit the `SignalRSourceCache`, you should use the `AddOrUpdateAsync`, `EditAsync`, etc extensions in `DynamicData.SignalR`.  You *might* be able to get away with the synchronous versions if there is a guaranteed signficant timespan between the cache creation and an edit.
+Since the connection is created asynchronously, to be sure that you are ready to edit the `SignalRSourceCache`, you should use the `AddOrUpdateAsync`, `EditAsync`, etc extensions in `DynamicData.SignalR`.  You *might* be able to get away with the synchronous versions if there is a guaranteed significant timespan between the cache creation and an edit.
 ```
 courseCache.AddOrUpdateAsync(new Course()
 {
@@ -193,7 +193,9 @@ courseCache.AddOrUpdateAsync(new Course()
     OwnerId = authService.UserId
 });
 ```
+**More quirks with `SignalRSourceCache`**
 
+You *can* use the `AsObservableCache()` extension to create a read-only copy, but then you will lose the ability (for now) to `Connect()` with a predicate.  The current overload of using a `Func<TObject,bool>` will **not** work since it needs to be an `Expression` like the sample above.  An alternative might be to put the cache behind a service and only expose a custom Connect method.
 
 ## Additional dependencies ##
 In addition to the expected AspNetCore stuff, there is a dependency on a library called `Serialize.Linq`.   This is the library that serializes the `Expression`.  
