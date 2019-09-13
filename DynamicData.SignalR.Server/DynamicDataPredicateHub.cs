@@ -93,7 +93,7 @@ namespace DynamicData.SignalR.Server
             {
                 //var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
                 var keySelector = GetKeySelector(); 
-                var deserializer = new ExpressionSerializer(new JsonSerializer());
+                var deserializer = new ExpressionSerializer(new NSoftJsonSerializer());
                 var filterExpression = (Expression<Func<TObject, bool>>)deserializer.DeserializeText(predicateFilterString);
                 IQueryable<TObject> query = _dbContext.Set<TObject>();
                 query = ChainIncludes(query);

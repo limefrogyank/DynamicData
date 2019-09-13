@@ -22,7 +22,7 @@ namespace DynamicData.SignalR.Core
             _keySelectorExpression = keySelectorExpression;
 
             _keySelector = _keySelectorExpression.Compile();
-            var serializer = new ExpressionSerializer(new JsonSerializer());
+            var serializer = new ExpressionSerializer(new NSoftJsonSerializer());
             _selectorString = serializer.SerializeText(_keySelectorExpression);  //string version for serialization on SignalR
         }
 
@@ -33,7 +33,7 @@ namespace DynamicData.SignalR.Core
             _keySelectorExpression = keySelectorExpression;
 
             _keySelector = _keySelectorExpression.Compile();
-            var serializer = new ExpressionSerializer(new JsonSerializer());
+            var serializer = new ExpressionSerializer(new NSoftJsonSerializer());
             _selectorString = serializer.SerializeText(_keySelectorExpression);  //string version for serialization on SignalR
         }
 

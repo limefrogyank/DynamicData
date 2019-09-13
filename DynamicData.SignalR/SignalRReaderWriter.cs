@@ -38,7 +38,8 @@ namespace DynamicData.SignalR
                 var settings = new JsonSerializerSettings()
                 {
                     Converters = new[] { new ChangeSetConverter<TObject, TKey>() },
-                    PreserveReferencesHandling = PreserveReferencesHandling.Objects
+                    PreserveReferencesHandling = PreserveReferencesHandling.All,
+                    ReferenceLoopHandling = ReferenceLoopHandling.Serialize
                 };
                 var changeSet = Newtonsoft.Json.JsonConvert.DeserializeObject<ChangeSet<TObject, TKey>>(changeSetJson, settings);
                 var localChangeSet = ReplaceInstancesWithCachedInstances(changeSet);
@@ -129,13 +130,17 @@ namespace DynamicData.SignalR
                 Func<TObject, bool> filter = null;
 
                 if (filterExpression == null)
-                    _data = await _connection.InvokeAsync<Dictionary<TKey, TObject>>("GetKeyValuePairs");
+                {
+                    var dataString = await _connection.InvokeAsync<string>("GetKeyValuePairs");
+                    _data = JsonConvert.DeserializeObject<Dictionary<TKey, TObject>>(dataString, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Serialize, PreserveReferencesHandling = PreserveReferencesHandling.All });
+                }
                 else
                 {
                     filter = filterExpression.Compile();
-                    var serializer = new ExpressionSerializer(new Serialize.Linq.Serializers.JsonSerializer());
+                    var serializer = new ExpressionSerializer(new NSoftJsonSerializer());
                     var expressionString = serializer.SerializeText(filterExpression);
-                    _data = await _connection.InvokeAsync<Dictionary<TKey, TObject>>("GetKeyValuePairsFiltered", expressionString);
+                    var dataString = await _connection.InvokeAsync<string>("GetKeyValuePairsFiltered", expressionString);
+                    _data = JsonConvert.DeserializeObject<Dictionary<TKey, TObject>>(dataString, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Serialize, PreserveReferencesHandling = PreserveReferencesHandling.All });
                 }
 
                 var dictionary = _data;

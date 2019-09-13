@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Reactive.Subjects;
 using System.Text;
 
-namespace DynamicData.SignalR.JSInterop
+namespace DynamicData.SignalR.BlazorClient
 {
     public class ChangeInvokeHelper
     {

@@ -7,7 +7,7 @@ using DynamicData.Kernel;
 using DynamicData.SignalR.Core;
 using Microsoft.JSInterop;
 
-namespace DynamicData.SignalR.JSInterop
+namespace DynamicData.SignalR.BlazorClient
 {
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     public class SignalRSourceCache<TObject, TKey> : ISignalRSourceCache<TObject, TKey>, ISignalRObservableCache<TObject, TKey>

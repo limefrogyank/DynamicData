@@ -2,6 +2,7 @@
 using DynamicData.Kernel;
 using DynamicData.SignalR.Core;
 using Microsoft.JSInterop;
+using Newtonsoft.Json;
 using Serialize.Linq.Serializers;
 using System;
 using System.Collections.Generic;
@@ -16,7 +17,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DynamicData.SignalR.JSInterop
+namespace DynamicData.SignalR.BlazorClient
 {
     internal sealed class SignalRReaderWriter<TObject, TKey> : SignalRReaderWriterBase<TObject,TKey>
     {
@@ -60,7 +61,13 @@ namespace DynamicData.SignalR.JSInterop
         //[JSInvokable]
         public void OnChanges(string changeSetJson)
         {
-            var changeSet = Newtonsoft.Json.JsonConvert.DeserializeObject<ChangeSet<TObject, TKey>>(changeSetJson, new ChangeSetConverter<TObject, TKey>());
+            var settings = new JsonSerializerSettings()
+            {
+                Converters = new[] { new ChangeSetConverter<TObject, TKey>() },
+                PreserveReferencesHandling = PreserveReferencesHandling.All,
+                ReferenceLoopHandling = ReferenceLoopHandling.Serialize
+            };
+            var changeSet = Newtonsoft.Json.JsonConvert.DeserializeObject<ChangeSet<TObject, TKey>>(changeSetJson, settings);
             var localChangeSet = ReplaceInstancesWithCachedInstances(changeSet);
             foreach (var change in changeSet)
             {
@@ -138,6 +145,7 @@ namespace DynamicData.SignalR.JSInterop
 
         protected override ChangeSet<TObject, TKey> DoUpdate(Action<SignalRRemoteUpdaterBase<TObject, TKey>> updateAction, Action<ChangeSet<TObject, TKey>> previewHandler, bool collectChanges)
         {
+            //lock (_locker)
             return _slocker.Lock(() =>
             {
                 if (previewHandler != null)
@@ -181,6 +189,7 @@ namespace DynamicData.SignalR.JSInterop
                     }
                 }
             });
+
         }
 
         //internal void WriteNested(Action<ISourceUpdater<TObject, TKey>> updateAction)
@@ -205,16 +214,27 @@ namespace DynamicData.SignalR.JSInterop
             {
                 Func<TObject, bool> filter = null;
 
-                if (filterExpression == null)
-                    _data = await _jsRuntime.InvokeAsync<Dictionary<TKey, TObject>>("dynamicDataSignalR.invoke", _connectionKey, "GetKeyValuePairs");
-                //_data = await _connection.InvokeAsync<Dictionary<TKey, TObject>>("GetKeyValuePairs");
-                else
+                try
                 {
-                    filter = filterExpression.Compile();
-                    var serializer = new ExpressionSerializer(new JsonSerializer());
-                    var expressionString = serializer.SerializeText(filterExpression);
-                    _data = await _jsRuntime.InvokeAsync<Dictionary<TKey, TObject>>("dynamicDataSignalR.invoke", _connectionKey, "GetKeyValuePairsFiltered", expressionString);
-                    //_data = await _connection.InvokeAsync<Dictionary<TKey, TObject>>("GetKeyValuePairsFiltered", expressionString);
+                    if (filterExpression == null)
+                    {
+                        var dataString = await _jsRuntime.InvokeAsync<string>("dynamicDataSignalR.invoke", _connectionKey, "GetKeyValuePairsString");
+                        _data = JsonConvert.DeserializeObject<Dictionary<TKey, TObject>>(dataString, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Serialize, PreserveReferencesHandling = PreserveReferencesHandling.All });
+                    }
+                    else
+                    {
+                        filter = filterExpression.Compile();
+                        var serializer = new ExpressionSerializer(new NSoftJsonSerializer());
+                        var expressionString = serializer.SerializeText(filterExpression);
+                        var dataString = await _jsRuntime.InvokeAsync<string>("dynamicDataSignalR.invoke", _connectionKey, "GetKeyValuePairsFilteredString", expressionString);
+                        _data = JsonConvert.DeserializeObject<Dictionary<TKey, TObject>>(dataString, new JsonSerializerSettings { ReferenceLoopHandling = ReferenceLoopHandling.Serialize, PreserveReferencesHandling = PreserveReferencesHandling.All });
+                        //_data = await _connection.InvokeAsync<Dictionary<TKey, TObject>>("GetKeyValuePairsFiltered", expressionString);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("Exception in GetInitialUpdates");
+                    Debug.WriteLine(ex.ToString());
                 }
 
                 var dictionary = _data;
@@ -236,6 +256,7 @@ namespace DynamicData.SignalR.JSInterop
                 return changes;
 
             });
+            //}
             _onChanges.OnNext(result);
             return result;
         }
