@@ -39,7 +39,8 @@ namespace DynamicData.SignalR
                  {
                      if (accessToken != null)
                          options.AccessTokenProvider = () => Task.FromResult(accessToken);
-                 
+
+                     // This section is required to work with HTTPS + Android + IISEXPRESS.  Or maybe get the cert installed.
                      //options.HttpMessageHandlerFactory = (handler) =>
                      //{
                      //    if (handler is HttpClientHandler clientHandler)
@@ -88,7 +89,7 @@ namespace DynamicData.SignalR
             {
                 await _connection.StartAsync();
 
-                var serializer = new ExpressionSerializer(new JsonSerializer());
+                var serializer = new ExpressionSerializer(new NSoftJsonSerializer());
                 var expressionString = serializer.SerializeText(_keySelectorExpression);
 
                 await _connection.InvokeAsync("Initialize", expressionString);

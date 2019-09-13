@@ -13,12 +13,13 @@ using System.Threading.Tasks;
 using DynamicData.Cache.Internal;
 using DynamicData.Kernel;
 using DynamicData.SignalR.Core;
-using DynamicData.SignalR.JSInterop;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Serialize.Linq;
+using Serialize.Linq.Extensions;
 using Serialize.Linq.Serializers;
 
-namespace DynamicData.SignalR
+namespace DynamicData.SignalR.BlazorClient
 {
     internal sealed class SignalRObservableCache<TObject, TKey> : SignalRObservableCacheBase<TObject,TKey>
     {
@@ -28,20 +29,25 @@ namespace DynamicData.SignalR
         private SignalRReaderWriter<TObject, TKey> backupReference;
         private string _connectionKey;
 
+        private Expression<Func<TObject, TKey>> localExpression;
+
         public SignalRObservableCache(IJSRuntime jsRuntime, string baseUrl, Expression<Func<TObject, TKey>> keySelectorExpression, string accessToken)
             : base(baseUrl, keySelectorExpression)
         {
             _jsRuntime = jsRuntime;
             _accessToken = accessToken;
-                        
+
+            localExpression = keySelectorExpression;
             
             initializationTask = InitializeSignalR();
         }
 
         internal Task InitializeSignalR()
         {
+            Debug.WriteLine("Initializing SignalR");
             var task = _slocker.LockAsync(async () =>
             {
+                Debug.WriteLine("Inside semaphore.");
                 try
                 {
                     _connectionKey = await _jsRuntime.InvokeAsync<string>(
@@ -67,18 +73,23 @@ namespace DynamicData.SignalR
                             _countChanged.Value.OnCompleted();
                         }
                     });
-
-
+                                        
                     //Need the InvokeHelper because Blazor can't invoke .NET from JS if the instances are generic classes.
                     var changeInvokeHelper = new ChangeInvokeHelper();
                     ((SignalRReaderWriter<TObject,TKey>)_readerWriter).InitializeHelper(changeInvokeHelper);
                     await _jsRuntime.InvokeAsync<object>(
                        "dynamicDataSignalR.connect",
                          _connectionKey,
-                        DotNetObjectRef.Create(changeInvokeHelper));
+                        DotNetObjectReference.Create(changeInvokeHelper));
 
-                    var serializer = new ExpressionSerializer(new JsonSerializer());
-                    var expressionString = serializer.SerializeText(_keySelectorExpression);
+                    
+                    var serializer = new ExpressionSerializer(new NSoftJsonSerializer());
+                    if (_keySelectorExpression == null)
+                        Debug.WriteLine("keySelectorExpression was null");
+                    if (localExpression == null)
+                        Debug.WriteLine("localExpression was null");
+                   
+                    var expressionString = serializer.SerializeText(localExpression);
 
                     await _jsRuntime.InvokeAsync<object>(
                         "dynamicDataSignalR.invoke",
@@ -88,9 +99,10 @@ namespace DynamicData.SignalR
                                        
                     Debug.WriteLine("Connection initialized");
                 }
-                catch
+                catch (Exception ex)
                 {
-                    var i = 3;
+                    Debug.WriteLine("Exception from InitializeSignalR");
+                    Debug.WriteLine(ex.ToString());
                 }
                 
             });

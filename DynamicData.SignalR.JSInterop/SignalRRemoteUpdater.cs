@@ -10,7 +10,7 @@ using DynamicData.SignalR.Core;
 using Microsoft.JSInterop;
 using Serialize.Linq.Serializers;
 
-namespace DynamicData.SignalR.JSInterop
+namespace DynamicData.SignalR.BlazorClient
 {
     public class SignalRRemoteUpdater<TObject, TKey> : SignalRRemoteUpdaterBase<TObject, TKey>
     {

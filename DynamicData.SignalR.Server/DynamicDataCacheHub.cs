@@ -43,7 +43,7 @@ namespace DynamicData.SignalR.Server
         protected Func<TObject,TKey> GetKeySelector()
         {
             var keySelectorString = (string)Context.Items["KeySelector"];
-            var deserializer = new ExpressionSerializer(new JsonSerializer());
+            var deserializer = new ExpressionSerializer(new NSoftJsonSerializer());
             var keySelectorExpression = (Expression<Func<TObject, TKey>>)deserializer.DeserializeText(keySelectorString);
 
             var keySelector = keySelectorExpression.Compile();
@@ -115,18 +115,31 @@ namespace DynamicData.SignalR.Server
             return data;
         }
 
+        // Required for Blazor since it can't deserialize complex objects
+        public virtual string GetKeyValuePairsString()
+        {
+            var data = GetKeyValuePairs();
+            return Newtonsoft.Json.JsonConvert.SerializeObject(data, new Newtonsoft.Json.JsonSerializerSettings { ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Serialize, PreserveReferencesHandling = Newtonsoft.Json.PreserveReferencesHandling.All });
+        }
+
+
         public virtual Task<Dictionary<TKey, TObject>> GetKeyValuePairsFiltered(string predicateFilterString)
         {
             //var keySelector = (Func<TObject, TKey>)Context.Items["KeySelector"];
             var keySelector = GetKeySelector();
 
-            var deserializer = new ExpressionSerializer(new JsonSerializer());
+            var deserializer = new ExpressionSerializer(new NSoftJsonSerializer());
             var filterExpression = (Expression<Func<TObject, bool>>)deserializer.DeserializeText(predicateFilterString);
 
             var data = StartQuery().Where(filterExpression).ToDictionary((o) => keySelector.Invoke(o));
             return Task.FromResult(data);
         }
 
+        public virtual async Task<string> GetKeyValuePairsFilteredString(string predicateFilterString)
+        {
+            var data = await GetKeyValuePairsFiltered(predicateFilterString);
+            return Newtonsoft.Json.JsonConvert.SerializeObject(data, new Newtonsoft.Json.JsonSerializerSettings { ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Serialize, PreserveReferencesHandling = Newtonsoft.Json.PreserveReferencesHandling.All });
+        }
 
 
         public virtual async Task AddOrUpdateObjects(IEnumerable<TObject> items)
